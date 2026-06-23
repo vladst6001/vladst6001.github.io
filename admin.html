@@ -347,6 +347,12 @@ body::after{
     <div id="usersList"></div>
   </div>
 
+  <div id="sUserDet" class="screen">
+    <button class="back" id="bkUserDet">← НАЗАД</button>
+    <div id="userDetBody"></div>
+    <div id="userOrdList"></div>
+  </div>
+
   <div id="sDet" class="screen">
     <button class="back" id="bkDet">← НАЗАД</button>
     <div class="stitle up">Заказ <span id="detNum">#0</span></div>
@@ -610,6 +616,14 @@ $('btnStat').onclick=async()=>{
 };
 
 /* ── USERS ── */
+function hasAvatar(url){
+  return url&&url!=='None'&&url!=='null'&&url.trim()&&url!=='undefined';
+}
+function getAvaUrl(url){
+  if(!hasAvatar(url))return null;
+  return url.startsWith('/avatars/')?API+url:url;
+}
+
 async function loadUsers(){
   go('sUsers');
   const list=$('usersList'),stats=$('usersStats');
@@ -619,9 +633,10 @@ async function loadUsers(){
     const r=await fetch(`${API}/admin_users`);
     const d=await r.json();
     const users=d.users||[];
+    const withAva=users.filter(u=>hasAvatar(u.avatar_url)).length;
     stats.innerHTML=`
       <div class="stat stat-n up"><div class="stat-ico">👥</div><div class="stat-val">${users.length}</div><div class="stat-lbl">Пользователей</div></div>
-      <div class="stat stat-r up d1"><div class="stat-ico">📸</div><div class="stat-val">${users.filter(u=>u.avatar_url).length}</div><div class="stat-lbl">С аватарами</div></div>`;
+      <div class="stat stat-r up d1"><div class="stat-ico">📸</div><div class="stat-val">${withAva}</div><div class="stat-lbl">С аватарами</div></div>`;
     if(!users.length){
       list.innerHTML='<div class="empty"><div class="empty-ico">👥</div><div class="empty-txt">Пользователей пока нет</div></div>';return;
     }
@@ -629,23 +644,68 @@ async function loadUsers(){
     users.forEach((u,i)=>{
       const div=document.createElement('div');
       div.className='ord-card up';div.style.animationDelay=(i*.04)+'s';
-      const hasAva=u.avatar_url&&u.avatar_url!=='None'&&u.avatar_url.trim()?true:false;
-      const avaUrl=hasAva?(u.avatar_url.startsWith('/avatars/')?API+u.avatar_url:u.avatar_url):null;
+      div.style.cursor='pointer';
+      div.onclick=()=>openUserDetail(u);
+      const avaUrl=getAvaUrl(u.avatar_url);
       div.innerHTML=`
         <div class="ord-stripe" style="background:var(--accent2)"></div>
         <div class="ord-head">
-          <span class="ord-id">${hasAva?'📸':'👤'} ${u.name||'Без имени'}</span>
+          <span class="ord-id">${avaUrl?'📸':'👤'} ${u.name||'Без имени'}</span>
           <span class="pill p-ok">ID: ${u.user_id}</span>
         </div>
         <div class="ord-grid">
           <div class="ord-row">📱 <b>${u.phone||'—'}</b></div>
           <div class="ord-row">📅 <b>${dt(u.updated_at)}</b></div>
-          ${avaUrl?`<div class="ord-row" style="grid-column:1/-1"><img src="${avaUrl}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);"></div>`:''}
-        </div>`;
+        </div>
+        ${avaUrl?`<div style="padding:10px 0 0"><img src="${avaUrl}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);display:block;"></div>`:''}`;
       list.appendChild(div);
     });
   }catch(e){list.innerHTML='<div class="loading">// ошибка загрузки</div>';}
 }
+
+async function openUserDetail(u){
+  go('sUserDet');
+  const body=$('userDetBody'),list=$('userOrdList');
+  body.innerHTML='<div class="loading">// загрузка...</div>';
+  list.innerHTML='';
+  const avaUrl=getAvaUrl(u.avatar_url);
+  body.innerHTML=`
+    <div class="det-card up">
+      ${avaUrl?`<div style="padding:20px;text-align:center"><img src="${avaUrl}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--accent);box-shadow:0 0 30px rgba(124,92,255,.2);"></div>`:`<div style="padding:20px;text-align:center;font-size:48px;opacity:.3;">👤</div>`}
+      <div class="det-row"><span class="det-lbl">Имя</span><span class="det-val">${u.name||'—'}</span></div>
+      <div class="det-row"><span class="det-lbl">Телефон</span><span class="det-val">${u.phone||'—'}</span></div>
+      <div class="det-row"><span class="det-lbl">Telegram ID</span><span class="det-val">${u.user_id}</span></div>
+      <div class="det-row"><span class="det-lbl">Зарегистрирован</span><span class="det-val">${dt(u.updated_at)}</span></div>
+    </div>`;
+  try{
+    const r=await fetch(`${API}/admin_user_orders/${u.user_id}`);
+    const d=await r.json();
+    const orders=d.orders||[];
+    if(orders.length){
+      list.innerHTML='<div class="sec-lbl" style="padding:0 0 10px">// История заказов ('+orders.length+')</div>';
+      orders.forEach((o,i)=>{
+        const div=document.createElement('div');
+        div.className='ord-card up';div.style.animationDelay=(i*.04)+'s';
+        const total=o.total_price||0;
+        div.innerHTML=`
+          <div class="ord-stripe" style="background:${getStripe(o.status)}"></div>
+          <div class="ord-head">
+            <span class="ord-id">#${o.id}</span>
+            <span class="pill ${getPill(o.status)}">${getLabel(o.status)}</span>
+          </div>
+          <div class="ord-grid">
+            <div class="ord-row">📦 <b>${o.model_name.length>24?o.model_name.substring(0,24)+'…':o.model_name}</b></div>
+            <div class="ord-row">🔢 <b>${o.quantity} шт.${total>0?' · '+total.toLocaleString()+' р':''}</b></div>
+            <div class="ord-row">📅 <b>${dt(o.created_at)}</b></div>
+          </div>`;
+        list.appendChild(div);
+      });
+    }else{
+      list.innerHTML='<div class="empty" style="padding:30px"><div class="empty-txt">Заказов пока нет</div></div>';
+    }
+  }catch(e){list.innerHTML='<div class="loading">// ошибка загрузки заказов</div>';}
+}
+$('bkUserDet').onclick=()=>{go('sUsers');loadUsers();};
 
 if(checkAccess()){go('sList');loadOrders();}
 tg.MainButton.setText('Закрыть');
