@@ -786,9 +786,8 @@ document.querySelectorAll('[data-theme]').forEach(el=>{
 function renderAva(){
   [['profAvaT','profAvaI'],['avaBigT','avaBigI']].forEach(([t,i])=>{
     const te=$(t),im=$(i);if(!te||!im)return;
-    if(profile.avatarUrl){
-      const url=profile.avatarUrl.startsWith('/avatars/')?API+profile.avatarUrl:profile.avatarUrl;
-      te.style.display='none';im.style.display='block';im.src=url;
+    if(profile.avatarUrl&&profile.avatarUrl.indexOf('data:image')===0){
+      te.style.display='none';im.style.display='block';im.src=profile.avatarUrl;
     }else{
       te.style.display='';im.style.display='none';te.textContent=profile.emoji||'👤';
     }
@@ -812,7 +811,7 @@ async function syncServer(){
     if(d.ok&&d.profile){
       if(d.profile.name)profile.name=d.profile.name;
       if(d.profile.phone)profile.phone=d.profile.phone;
-      if(d.profile.avatar_url)profile.avatarUrl=d.profile.avatar_url;
+      if(d.profile.avatar_url&&d.profile.avatar_url.indexOf('data:image')===0)profile.avatarUrl=d.profile.avatar_url;
       save();refreshCard();
     }
   }catch(e){}

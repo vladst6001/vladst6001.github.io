@@ -617,11 +617,11 @@ $('btnStat').onclick=async()=>{
 
 /* ── USERS ── */
 function hasAvatar(url){
-  return url&&url!=='None'&&url!=='null'&&url.trim()&&url!=='undefined';
+  return url&&url!=='None'&&url!=='null'&&url.trim()&&url!=='undefined'&&url.indexOf('data:image')===0;
 }
 function getAvaUrl(url){
   if(!hasAvatar(url))return null;
-  return url.startsWith('/avatars/')?API+url:url;
+  return url;
 }
 
 async function loadUsers(){
@@ -657,7 +657,7 @@ async function loadUsers(){
           <div class="ord-row">📱 <b>${u.phone||'—'}</b></div>
           <div class="ord-row">📅 <b>${dt(u.updated_at)}</b></div>
         </div>
-        ${avaUrl?`<div style="padding:10px 0 0"><img src="${avaUrl}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);display:block;"></div>`:''}`;
+        ${avaUrl?`<div style="padding:10px 0 0"><img src="${avaUrl}" style="width:56px;height:56px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);display:block;" onerror="this.style.display='none'"></div>`:''}`;
       list.appendChild(div);
     });
   }catch(e){list.innerHTML='<div class="loading">// ошибка загрузки</div>';}
@@ -671,7 +671,7 @@ async function openUserDetail(u){
   const avaUrl=getAvaUrl(u.avatar_url);
   body.innerHTML=`
     <div class="det-card up">
-      ${avaUrl?`<div style="padding:20px;text-align:center"><img src="${avaUrl}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--accent);box-shadow:0 0 30px rgba(124,92,255,.2);"></div>`:`<div style="padding:20px;text-align:center;font-size:48px;opacity:.3;">👤</div>`}
+      ${avaUrl?`<div style="padding:20px;text-align:center"><img src="${avaUrl}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;border:3px solid var(--accent);box-shadow:0 0 30px rgba(124,92,255,.2);" onerror="this.parentElement.innerHTML='<div style=\\'font-size:48px;opacity:.3;\\'>👤</div>'"></div>`:`<div style="padding:20px;text-align:center;font-size:48px;opacity:.3;">👤</div>`}
       <div class="det-row"><span class="det-lbl">Имя</span><span class="det-val">${u.name||'—'}</span></div>
       <div class="det-row"><span class="det-lbl">Телефон</span><span class="det-val">${u.phone||'—'}</span></div>
       <div class="det-row"><span class="det-lbl">Telegram ID</span><span class="det-val">${u.user_id}</span></div>
@@ -686,6 +686,8 @@ async function openUserDetail(u){
       orders.forEach((o,i)=>{
         const div=document.createElement('div');
         div.className='ord-card up';div.style.animationDelay=(i*.04)+'s';
+        div.style.cursor='pointer';
+        div.onclick=()=>openUserOrderDetail(o,u);
         const total=o.total_price||0;
         div.innerHTML=`
           <div class="ord-stripe" style="background:${getStripe(o.status)}"></div>
@@ -704,6 +706,26 @@ async function openUserDetail(u){
       list.innerHTML='<div class="empty" style="padding:30px"><div class="empty-txt">Заказов пока нет</div></div>';
     }
   }catch(e){list.innerHTML='<div class="loading">// ошибка загрузки заказов</div>';}
+}
+
+async function openUserOrderDetail(o,u){
+  const fullOrders=await fetch(`${API}/admin_orders?status=all`).then(r=>r.json()).then(d=>d.orders||[]);
+  const full=fullOrders.find(x=>x.id===o.id);
+  if(full)openDetail(full);
+  else{
+    go('sDet');
+    $('detNum').textContent='#'+o.id;
+    $('detBody').innerHTML=`
+      <div class="det-card up">
+        <div class="det-row"><span class="det-lbl">Статус</span><span class="det-val"><span class="pill ${getPill(o.status)}">${getLabel(o.status)}</span></span></div>
+        <div class="det-row"><span class="det-lbl">Клиент</span><span class="det-val">${u.name||'—'}</span></div>
+        <div class="det-row"><span class="det-lbl">Модель</span><span class="det-val">${o.model_name}</span></div>
+        <div class="det-row"><span class="det-lbl">Кол-во</span><span class="det-val">${o.quantity} шт.</span></div>
+        ${o.total_price>0?`<div class="det-row"><span class="det-lbl">Итого</span><span class="det-val" style="color:var(--accent)">${o.total_price.toLocaleString()} руб.</span></div>`:''}
+        <div class="det-row"><span class="det-lbl">Создан</span><span class="det-val">${dt(o.created_at)}</span></div>
+      </div>`;
+    $('actNote').className='notice';
+  }
 }
 $('bkUserDet').onclick=()=>{go('sUsers');loadUsers();};
 
