@@ -786,8 +786,13 @@ document.querySelectorAll('[data-theme]').forEach(el=>{
 function renderAva(){
   [['profAvaT','profAvaI'],['avaBigT','avaBigI']].forEach(([t,i])=>{
     const te=$(t),im=$(i);if(!te||!im)return;
-    if(profile.avatarUrl&&profile.avatarUrl.indexOf('data:image')===0){
-      te.style.display='none';im.style.display='block';im.src=profile.avatarUrl;
+    const url=profile.avatarUrl;
+    const hasAva=url&&url!=='None'&&url!=='null'&&url!=='undefined'&&url.trim()&&url!=='null';
+    if(hasAva){
+      let src=url;
+      if(url.indexOf('/avatars/')===0)src=API+url;
+      te.style.display='none';im.style.display='block';im.src=src;
+      im.onerror=()=>{te.style.display='';im.style.display='none';te.textContent=profile.emoji||'👤';};
     }else{
       te.style.display='';im.style.display='none';te.textContent=profile.emoji||'👤';
     }
@@ -811,7 +816,10 @@ async function syncServer(){
     if(d.ok&&d.profile){
       if(d.profile.name)profile.name=d.profile.name;
       if(d.profile.phone)profile.phone=d.profile.phone;
-      if(d.profile.avatar_url&&d.profile.avatar_url.indexOf('data:image')===0)profile.avatarUrl=d.profile.avatar_url;
+      if(d.profile.avatar_url){
+        const av=d.profile.avatar_url;
+        if(av&&av!=='None'&&av!=='null'&&av.trim())profile.avatarUrl=av;
+      }
       save();refreshCard();
     }
   }catch(e){}
@@ -998,16 +1006,29 @@ $('sSave').onclick=()=>{
 /* ── AVATAR ── */
 $('avaBig').onclick=()=>$('avaPhoto').click();
 $('avaPhoto').onclick=()=>{
-  const inp=document.createElement('input');inp.type='file';inp.accept='image/*';
-  inp.onchange=e=>{if(e.target.files[0])openCrop(e.target.files[0]);};inp.click();
+  const inp=document.createElement('input');
+  inp.type='file';inp.accept='image/*';inp.style.display='none';
+  document.body.appendChild(inp);
+  inp.onchange=e=>{
+    if(e.target.files&&e.target.files[0])openCrop(e.target.files[0]);
+    document.body.removeChild(inp);
+  };
+  inp.click();
 };
 $('avaEmoji').onclick=()=>{$('mEmoji').classList.remove('hidden');$('emojiInp').value='';};
-$('avaRm').onclick=()=>{profile.emoji='👤';profile.avatarUrl=null;renderAva();save();};
+$('avaRm').onclick=()=>{
+  profile.emoji='👤';profile.avatarUrl=null;renderAva();save();
+  const uid=tg.initDataUnsafe?.user?.id;
+  fetch(`${API}/save_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,name:profile.name,phone:profile.phone,avatar_url:null})}).catch(()=>{});
+};
 
 $('emojiCancel').onclick=()=>$('mEmoji').classList.add('hidden');
 $('emojiOk').onclick=()=>{
   const e=$('emojiInp').value.trim();
-  if(e){profile.emoji=e;profile.avatarUrl=null;renderAva();save();}
+  if(e){profile.emoji=e;profile.avatarUrl=null;renderAva();save();
+    const uid=tg.initDataUnsafe?.user?.id;
+    fetch(`${API}/save_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,name:profile.name,phone:profile.phone,avatar_url:null})}).catch(()=>{});
+  }
   $('mEmoji').classList.add('hidden');
 };
 $('mEmoji').onclick=ev=>{if(ev.target===$('mEmoji'))$('mEmoji').classList.add('hidden');};
@@ -1017,27 +1038,56 @@ function openCrop(file){
   reader.onload=ev=>{
     const img=$('cropImg');img.src=ev.target.result;
     $('mCrop').classList.remove('hidden');
-    if(cropper)cropper.destroy();
-    setTimeout(()=>{cropper=new Cropper(img,{aspectRatio:1,viewMode:1,dragMode:'move',autoCropArea:1,guides:false,background:false});},100);
+    if(cropper){try{cropper.destroy();}catch(e){}}
+    cropper=null;
+    setTimeout(()=>{
+      try{
+        cropper=new Cropper(img,{aspectRatio:1,viewMode:1,dragMode:'move',autoCropArea:1,guides:false,background:false});
+      }catch(e){
+        console.error('Cropper error:',e);
+        $('mCrop').classList.add('hidden');
+      }
+    },200);
   };
+  reader.onerror=()=>{alert('Ошибка чтения файла');};
   reader.readAsDataURL(file);
 }
-$('cropCancel').onclick=()=>{$('mCrop').classList.add('hidden');if(cropper){cropper.destroy();cropper=null;}};
+$('cropCancel').onclick=()=>{
+  $('mCrop').classList.add('hidden');
+  if(cropper){try{cropper.destroy();}catch(e){}}
+  cropper=null;
+};
 $('cropOk').onclick=async()=>{
   if(!cropper)return;
-  const canvas=cropper.getCroppedCanvas({width:300,height:300});
-  const imgData=canvas.toDataURL('image/jpeg',.88);
-  const uid=tg.initDataUnsafe?.user?.id;
   try{
-    const r=await fetch(`${API}/upload_avatar`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,image_data:imgData})});
+    const canvas=cropper.getCroppedCanvas({width:200,height:200});
+    if(!canvas){alert('Ошибка обрезки');return;}
+    const imgData=canvas.toDataURL('image/jpeg',0.7);
+    const uid=tg.initDataUnsafe?.user?.id;
+    const r=await fetch(`${API}/upload_avatar`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({user_id:uid,image_data:imgData})
+    });
     const d=await r.json();
-    if(d.ok){profile.avatarUrl=d.avatar_url;profile.emoji=null;save();renderAva();}
-    else{alert('Ошибка загрузки аватара');}
+    if(d.ok&&d.avatar_url){
+      profile.avatarUrl=d.avatar_url;
+      profile.emoji=null;
+      save();renderAva();
+    }else{
+      profile.avatarUrl=imgData;save();renderAva();
+    }
   }catch(e){
-    // Если сервер недоступен — сохраняем локально base64
-    profile.avatarUrl=imgData;save();renderAva();
+    console.error('Upload error:',e);
+    try{
+      const canvas=cropper.getCroppedCanvas({width:200,height:200});
+      const imgData=canvas.toDataURL('image/jpeg',0.7);
+      profile.avatarUrl=imgData;save();renderAva();
+    }catch(e2){}
   }
-  $('mCrop').classList.add('hidden');cropper.destroy();cropper=null;
+  $('mCrop').classList.add('hidden');
+  if(cropper){try{cropper.destroy();}catch(e){}}
+  cropper=null;
 };
 
 /* ── INIT ── */

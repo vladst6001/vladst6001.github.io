@@ -617,10 +617,18 @@ $('btnStat').onclick=async()=>{
 
 /* ── USERS ── */
 function hasAvatar(url){
-  return url&&url!=='None'&&url!=='null'&&url.trim()&&url!=='undefined'&&url.indexOf('data:image')===0;
+  if(!url||url==='None'||url==='null'||url==='undefined')return false;
+  url=url.trim();
+  if(!url)return false;
+  if(url.indexOf('data:image')===0)return true;
+  if(url.indexOf('/avatars/')===0)return true;
+  if(url.indexOf('http')===0)return true;
+  return false;
 }
 function getAvaUrl(url){
   if(!hasAvatar(url))return null;
+  if(url.indexOf('data:image')===0)return url;
+  if(url.indexOf('/avatars/')===0)return API+url;
   return url;
 }
 
