@@ -752,17 +752,20 @@ function dt(s){
 }
 function phone(el){
   let v=el.value.replace(/[^0-9]/g,'');
-  if(!v.startsWith('375'))v='375'+v;
+  if(v.startsWith('375'))v=v.substring(3);
+  else if(v.startsWith('7'))v=v.substring(1);
+  else if(v.startsWith('8'))v=v.substring(1);
+  if(v.length>9)v=v.substring(0,9);
   let f='+375';
-  if(v.length>3)f+=' '+v.substring(3,5);
-  if(v.length>5)f+=' '+v.substring(5,8);
-  if(v.length>8)f+='-'+v.substring(8,10);
-  if(v.length>10)f+='-'+v.substring(10,12);
-  el.value=f.trim();
+  if(v.length>0)f+=' '+v.substring(0,2);
+  if(v.length>2)f+=' '+v.substring(2,5);
+  if(v.length>5)f+='-'+v.substring(5,7);
+  if(v.length>7)f+='-'+v.substring(7,9);
+  el.value=f;
 }
 function setupPhone(el){
   if(!el)return;
-  el.addEventListener('focus',()=>{if(!el.value)el.value='+375';});
+  el.addEventListener('focus',()=>{if(!el.value)el.value='+375 ';});
   el.addEventListener('input',()=>phone(el));
 }
 
@@ -846,11 +849,12 @@ $('rBtn').onclick=()=>{
   const n=$('rName').value.trim();let p=$('rPhone').value.trim();
   const note=$('rNote');
   const digits=p.replace(/[^0-9]/g,'');
-  if(digits.startsWith('375')&&digits.length>=12){p='+'+digits.substring(0,12);}
-  else if(digits.startsWith('7')&&digits.length>=11){p='+'+digits.substring(0,11);}
-  else if(digits.startsWith('8')&&digits.length>=11){p='+7'+digits.substring(1,11);}
-  else if(digits.length>=9){p='+375'+digits.substring(digits.length-9);}
-  else{note.textContent='❌ Введите корректный номер (+375...)';note.className='notice err';setTimeout(()=>note.className='notice',3e3);return;}
+  let phone9=digits;
+  if(digits.startsWith('375'))phone9=digits.substring(3);
+  else if(digits.startsWith('7'))phone9=digits.substring(1);
+  else if(digits.startsWith('8'))phone9=digits.substring(1);
+  if(phone9.length!==9){note.textContent='❌ Нужно ровно 9 цифр (номер Беларуси)';note.className='notice err';setTimeout(()=>note.className='notice',3e3);return;}
+  p=`+375 ${phone9.substring(0,2)} ${phone9.substring(2,5)}-${phone9.substring(5,7)}-${phone9.substring(7,9)}`;
   if(!n){note.textContent='❌ Введите имя';note.className='notice err';setTimeout(()=>note.className='notice',3e3);return;}
   profile={...profile,name:n,phone:p,registered:true};save();refreshCard();go('sMain');
   const uid=tg.initDataUnsafe?.user?.id;
