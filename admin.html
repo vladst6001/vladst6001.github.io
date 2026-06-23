@@ -67,7 +67,7 @@ body::after{
 .hdr-refresh:active{transform:rotate(180deg);}
 
 .tabs{
-  display:grid;grid-template-columns:1fr 1fr 1fr;
+  display:grid;grid-template-columns:1fr 1fr 1fr 1fr;
   background:var(--paper);
   border-bottom:1px solid var(--edge);
   position:sticky;top:56px;z-index:99;
@@ -311,6 +311,7 @@ body::after{
   <div class="tab on" data-tab="new">🆕 Новые</div>
   <div class="tab"    data-tab="active">⚡ Активные</div>
   <div class="tab"    data-tab="all">📋 Все</div>
+  <div class="tab"    data-tab="users">👥 Юзеры</div>
 </div>
 
 <div class="search-bar" id="searchBar">
@@ -339,6 +340,11 @@ body::after{
   <div id="sList" class="screen">
     <div class="stats" id="statsRow"></div>
     <div id="ordList"></div>
+  </div>
+
+  <div id="sUsers" class="screen">
+    <div class="stats" id="usersStats"></div>
+    <div id="usersList"></div>
   </div>
 
   <div id="sDet" class="screen">
@@ -430,7 +436,9 @@ function go(id){
 document.querySelectorAll('.tab').forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
-    t.classList.add('on');tab=t.dataset.tab;loadOrders();
+    t.classList.add('on');tab=t.dataset.tab;
+    if(tab==='users'){loadUsers();}
+    else{loadOrders();}
   };
 });
 $('hdrRefresh').onclick=()=>{$('hdrRefresh').style.transform='rotate(360deg)';setTimeout(()=>$('hdrRefresh').style.transform='',400);loadOrders();};
@@ -600,6 +608,44 @@ $('btnStat').onclick=async()=>{
   const ok=await post('/admin_status',{order_id:cur.id,status});
   if(ok){cur.status=status;openDetail(cur);}
 };
+
+/* ── USERS ── */
+async function loadUsers(){
+  go('sUsers');
+  const list=$('usersList'),stats=$('usersStats');
+  list.innerHTML='<div class="loading">// загрузка...</div>';
+  stats.innerHTML='';
+  try{
+    const r=await fetch(`${API}/admin_users`);
+    const d=await r.json();
+    const users=d.users||[];
+    stats.innerHTML=`
+      <div class="stat stat-n up"><div class="stat-ico">👥</div><div class="stat-val">${users.length}</div><div class="stat-lbl">Пользователей</div></div>
+      <div class="stat stat-r up d1"><div class="stat-ico">📸</div><div class="stat-val">${users.filter(u=>u.avatar_url).length}</div><div class="stat-lbl">С аватарами</div></div>`;
+    if(!users.length){
+      list.innerHTML='<div class="empty"><div class="empty-ico">👥</div><div class="empty-txt">Пользователей пока нет</div></div>';return;
+    }
+    list.innerHTML='';
+    users.forEach((u,i)=>{
+      const div=document.createElement('div');
+      div.className='ord-card up';div.style.animationDelay=(i*.04)+'s';
+      const hasAva=u.avatar_url?'📸':'👤';
+      const avaUrl=u.avatar_url?(u.avatar_url.startsWith('/avatars/')?API+u.avatar_url:u.avatar_url):null;
+      div.innerHTML=`
+        <div class="ord-stripe" style="background:var(--accent2)"></div>
+        <div class="ord-head">
+          <span class="ord-id">${hasAva} ${u.name||'Без имени'}</span>
+          <span class="pill p-ok">ID: ${u.user_id}</span>
+        </div>
+        <div class="ord-grid">
+          <div class="ord-row">📱 <b>${u.phone||'—'}</b></div>
+          <div class="ord-row">📅 <b>${dt(u.updated_at)}</b></div>
+          ${avaUrl?`<div class="ord-row" style="grid-column:1/-1"><img src="${avaUrl}" style="width:40px;height:40px;border-radius:50%;object-fit:cover;border:2px solid var(--accent);"></div>`:''}
+        </div>`;
+      list.appendChild(div);
+    });
+  }catch(e){list.innerHTML='<div class="loading">// ошибка загрузки</div>';}
+}
 
 if(checkAccess()){go('sList');loadOrders();}
 tg.MainButton.setText('Закрыть');

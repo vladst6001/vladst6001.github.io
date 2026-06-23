@@ -845,8 +845,13 @@ $('profCard').onclick=()=>{if(profile.registered){openSettings();go('sSet');}};
 $('rBtn').onclick=()=>{
   const n=$('rName').value.trim();let p=$('rPhone').value.trim();
   const note=$('rNote');
-  if(!p.startsWith('+375'))p='+375'+p.replace(/[^0-9]/g,'');
-  if(!n||p.length<8){note.textContent='❌ Заполни все поля';note.className='notice err';setTimeout(()=>note.className='notice',3e3);return;}
+  const digits=p.replace(/[^0-9]/g,'');
+  if(digits.startsWith('375')&&digits.length>=12){p='+'+digits.substring(0,12);}
+  else if(digits.startsWith('7')&&digits.length>=11){p='+'+digits.substring(0,11);}
+  else if(digits.startsWith('8')&&digits.length>=11){p='+7'+digits.substring(1,11);}
+  else if(digits.length>=9){p='+375'+digits.substring(digits.length-9);}
+  else{note.textContent='❌ Введите корректный номер (+375...)';note.className='notice err';setTimeout(()=>note.className='notice',3e3);return;}
+  if(!n){note.textContent='❌ Введите имя';note.className='notice err';setTimeout(()=>note.className='notice',3e3);return;}
   profile={...profile,name:n,phone:p,registered:true};save();refreshCard();go('sMain');
   const uid=tg.initDataUnsafe?.user?.id;
   fetch(`${API}/save_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,name:n,phone:p})}).catch(()=>{});
