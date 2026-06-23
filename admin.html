@@ -629,12 +629,12 @@ async function loadUsers(){
     users.forEach((u,i)=>{
       const div=document.createElement('div');
       div.className='ord-card up';div.style.animationDelay=(i*.04)+'s';
-      const hasAva=u.avatar_url?'📸':'👤';
-      const avaUrl=u.avatar_url?(u.avatar_url.startsWith('/avatars/')?API+u.avatar_url:u.avatar_url):null;
+      const hasAva=u.avatar_url&&u.avatar_url!=='None'&&u.avatar_url.trim()?true:false;
+      const avaUrl=hasAva?(u.avatar_url.startsWith('/avatars/')?API+u.avatar_url:u.avatar_url):null;
       div.innerHTML=`
         <div class="ord-stripe" style="background:var(--accent2)"></div>
         <div class="ord-head">
-          <span class="ord-id">${hasAva} ${u.name||'Без имени'}</span>
+          <span class="ord-id">${hasAva?'📸':'👤'} ${u.name||'Без имени'}</span>
           <span class="pill p-ok">ID: ${u.user_id}</span>
         </div>
         <div class="ord-grid">
