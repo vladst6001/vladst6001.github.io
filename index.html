@@ -2,755 +2,594 @@
 <html lang="ru">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#07080d">
 <title>3Dprinti</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Unbounded:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-
 :root{
-  --ink:    #0a0b12;
-  --paper:  #0f1019;
-  --card:   #161825;
-  --edge:   rgba(130,140,255,0.08);
-  --txt:    #e4e6f2;
-  --muted:  #5a5e80;
-  --accent: #7c5cff;
-  --accent2:#5b8cff;
-  --grad:   linear-gradient(135deg,#7c5cff 0%,#5b8cff 100%);
-  --red:    #ff4757;
-  --orange: #ff9500;
-  --teal:   #00d4aa;
-  --r:      14px;
-  --mono:   'Space Mono', monospace;
-  --head:   'Unbounded', sans-serif;
+  --bg:#07080d;--bg2:#0c0d15;--card:#12131f;--card2:#181a2a;
+  --edge:rgba(120,130,255,.08);--txt:#eaecf5;--txt2:#8b8fad;
+  --accent:#6c5ce7;--accent2:#a29bfe;
+  --grad:linear-gradient(135deg,#6c5ce7 0%,#a29bfe 50%,#74b9ff 100%);
+  --grad2:linear-gradient(135deg,#6c5ce7 0%,#a29bfe 100%);
+  --green:#00b894;--red:#ff6b6b;--orange:#fdcb6e;--blue:#74b9ff;
+  --r:16px;--safe-top:env(safe-area-inset-top,20px);--safe-bot:env(safe-area-inset-bottom,0px);
 }
+html,body{background:var(--bg);color:var(--txt);font-family:'Inter',system-ui,sans-serif;font-size:15px;line-height:1.5;min-height:100dvh;overflow-x:hidden;-webkit-font-smoothing:antialiased;-webkit-tap-highlight-color:transparent;padding-top:var(--safe-top);}
 
-html{background:var(--ink);}
+/* STATUS BAR FIX */
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:var(--safe-top);background:var(--bg);z-index:9998;}
 
-body{
-  background:var(--ink);
-  color:var(--txt);
-  font-family:var(--mono);
-  font-size:13px;
-  line-height:1.6;
-  min-height:100vh;
-  overflow-x:hidden;
-}
+/* SPLASH */
+.splash{position:fixed;inset:0;z-index:9999;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity .5s,visibility .5s;}
+.splash.hide{opacity:0;visibility:hidden;pointer-events:none;}
+.splash-logo{width:100px;height:100px;background:var(--grad);border-radius:28px;display:flex;align-items:center;justify-content:center;font-size:48px;box-shadow:0 20px 60px rgba(108,92,231,.4);animation:sp 2s ease infinite;margin-bottom:24px;}
+@keyframes sp{0%,100%{transform:scale(1);box-shadow:0 20px 60px rgba(108,92,231,.4);}50%{transform:scale(1.05);box-shadow:0 25px 70px rgba(108,92,231,.5);}}
+.splash-title{font-size:28px;font-weight:800;letter-spacing:-.5px;margin-bottom:8px;}
+.splash-sub{color:var(--txt2);font-size:14px;}
+.splash-loader{width:40px;height:4px;border-radius:2px;background:var(--card2);margin-top:40px;overflow:hidden;}
+.splash-loader::after{content:'';display:block;width:50%;height:100%;background:var(--grad);border-radius:2px;animation:ld 1s ease infinite;}
+@keyframes ld{0%{transform:translateX(-100%);}100%{transform:translateX(300%);}}
 
-/* noise texture overlay */
-body::after{
-  content:'';
-  position:fixed;inset:0;z-index:999;
-  pointer-events:none;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
-  opacity:0.4;
-}
+/* BOTTOM NAV */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;z-index:100;background:rgba(12,13,21,.95);backdrop-filter:blur(20px);border-top:1px solid var(--edge);display:flex;padding:8px 0 calc(8px + var(--safe-bot));}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0;cursor:pointer;color:var(--txt2);font-size:10px;font-weight:500;transition:color .2s;}
+.nav-item.active{color:var(--accent2);}
+.nav-icon{font-size:22px;transition:transform .2s;}
+.nav-item.active .nav-icon{transform:scale(1.1);}
 
-/* ══ SCROLLBAR ══ */
-::-webkit-scrollbar{width:3px;}
-::-webkit-scrollbar-track{background:var(--ink);}
-::-webkit-scrollbar-thumb{background:var(--accent);border-radius:2px;}
+/* PAGES */
+.page{display:none;padding:0 16px 100px;animation:fi .3s ease;}
+.page.active{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
 
-/* ══ HEADER ══ */
-.hdr{
-  position:sticky;top:0;z-index:100;
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 16px;
-  background:rgba(11,12,15,0.92);
-  backdrop-filter:blur(16px);
-  border-bottom:1px solid var(--edge);
-}
-.hdr-brand{
-  display:flex;align-items:center;gap:10px;
-}
-.hdr-icon{
-  width:32px;height:32px;
-  background:var(--grad);
-  border-radius:8px;
-  display:flex;align-items:center;justify-content:center;
-  font-size:16px;
-  flex-shrink:0;
-}
-.hdr-name{
-  font-family:var(--head);
-  font-size:14px;font-weight:900;
-  letter-spacing:-0.5px;
-  color:var(--txt);
-}
-.hdr-tag{
-  font-size:9px;font-weight:400;
-  color:var(--muted);
-  letter-spacing:1px;
-  text-transform:uppercase;
-  display:block;margin-top:-2px;
-}
+/* HEADER */
+.page-header{padding:16px 0 12px;display:flex;align-items:center;justify-content:space-between;}
+.page-title{font-size:26px;font-weight:800;letter-spacing:-.5px;}
+.page-title span{background:var(--grad);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.page-avatar{width:40px;height:40px;border-radius:50%;background:var(--card2);border:2px solid var(--edge);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;overflow:hidden;transition:border-color .2s;}
+.page-avatar:active{border-color:var(--accent);}
+.page-avatar img{width:100%;height:100%;object-fit:cover;}
 
-/* ══ WRAP ══ */
-.wrap{max-width:480px;margin:0 auto;padding:0 14px 90px;}
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--edge);border-radius:var(--r);padding:16px;margin-bottom:12px;transition:transform .15s;}
+.card:active{transform:scale(.98);}
 
-/* ══ SCREEN ══ */
-.screen{display:none;opacity:0;transition:opacity .25s ease;}
-.screen.active{display:block;opacity:1;}
+/* STATS */
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;}
+.stat-card{background:var(--card);border:1px solid var(--edge);border-radius:var(--r);padding:16px;position:relative;overflow:hidden;}
+.stat-icon{font-size:24px;margin-bottom:8px;}
+.stat-val{font-size:24px;font-weight:800;letter-spacing:-.5px;}
+.stat-label{font-size:11px;color:var(--txt2);margin-top:2px;text-transform:uppercase;letter-spacing:.5px;}
 
-/* ══ REGISTER ══ */
-.reg-hero{
-  padding:36px 0 28px;
-  text-align:center;
-}
-.reg-orb{
-  width:90px;height:90px;margin:0 auto 20px;
-  background:var(--lime);
-  border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  font-size:40px;
-  box-shadow:0 0 60px rgba(200,241,53,0.3);
-  animation:pulse 3s ease infinite;
-}
-@keyframes pulse{
-  0%,100%{box-shadow:0 0 60px rgba(200,241,53,0.3);}
-  50%{box-shadow:0 0 90px rgba(200,241,53,0.5);}
-}
-.reg-title{
-  font-family:var(--head);
-  font-size:22px;font-weight:900;
-  letter-spacing:-1px;
-  margin-bottom:8px;
-  line-height:1.2;
-}
-.reg-sub{color:var(--muted);font-size:12px;line-height:1.6;}
+/* ORDER CARD */
+.order-card{background:var(--card);border:1px solid var(--edge);border-radius:var(--r);padding:16px;margin-bottom:10px;cursor:pointer;transition:all .15s;position:relative;overflow:hidden;}
+.order-card:active{transform:scale(.98);border-color:rgba(108,92,231,.3);}
+.order-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.order-id{font-size:16px;font-weight:700;}
+.badge{font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;}
+.b-new{background:rgba(253,203,110,.12);color:var(--orange);}
+.b-active{background:rgba(108,92,231,.12);color:var(--accent2);}
+.b-done{background:rgba(0,184,148,.12);color:var(--green);}
+.b-cancel{background:rgba(255,107,107,.12);color:var(--red);}
+.order-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;}
+.order-field{font-size:13px;color:var(--txt2);display:flex;align-items:center;gap:6px;}
+.order-field b{color:var(--txt);font-weight:500;}
+.order-stripe{position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 2px 2px 0;}
 
-/* ══ LABEL ══ */
-.lbl{
-  display:block;
-  font-size:10px;font-weight:700;
-  letter-spacing:1.5px;
-  text-transform:uppercase;
-  color:var(--accent);
-  margin-bottom:8px;
-}
+/* BUTTONS */
+.btn{width:100%;padding:16px;border:none;border-radius:var(--r);font-family:inherit;font-size:15px;font-weight:700;cursor:pointer;transition:all .15s;letter-spacing:.3px;}
+.btn:active{transform:scale(.97);opacity:.9;}
+.btn-primary{background:var(--grad2);color:#fff;box-shadow:0 8px 30px rgba(108,92,231,.3);}
+.btn-ghost{background:var(--card);color:var(--txt);border:1px solid var(--edge);}
 
-/* ══ INPUT ══ */
-.inp{
-  width:100%;
-  padding:14px 16px;
-  background:var(--card);
-  border:1px solid var(--edge);
-  border-radius:var(--r);
-  font-family:var(--mono);
-  font-size:14px;
-  color:var(--txt);
-  outline:none;
-  transition:border-color .2s,box-shadow .2s;
-  resize:none;
-}
-.inp:focus{
-  border-color:var(--accent);
-  box-shadow:0 0 0 3px rgba(124,92,255,0.1);
-}
-.inp::placeholder{color:var(--muted);}
-.f{margin-bottom:16px;}
+/* FORM */
+.input-group{margin-bottom:16px;}
+.input-label{font-size:11px;font-weight:600;color:var(--txt2);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;display:block;}
+.input{width:100%;padding:14px 16px;background:var(--card);border:1px solid var(--edge);border-radius:var(--r);font-family:inherit;font-size:15px;color:var(--txt);outline:none;transition:border-color .2s;}
+.input:focus{border-color:var(--accent);}
+.input::placeholder{color:var(--txt2);opacity:.5;}
+.textarea{width:100%;padding:14px 16px;background:var(--card);border:1px solid var(--edge);border-radius:var(--r);font-family:inherit;font-size:15px;color:var(--txt);outline:none;resize:none;min-height:100px;transition:border-color .2s;}
+.textarea:focus{border-color:var(--accent);}
+.textarea::placeholder{color:var(--txt2);opacity:.5;}
 
-/* ══ PRIMARY BUTTON ══ */
-.btn{
-  width:100%;
-  padding:16px;
-  background:var(--grad);
-  color:#fff;
-  border:none;
-  border-radius:var(--r);
-  font-family:var(--head);
-  font-size:13px;font-weight:700;
-  letter-spacing:0.5px;
-  cursor:pointer;
-  transition:transform .1s,opacity .1s,box-shadow .2s;
-  box-shadow:0 4px 20px rgba(124,92,255,0.25);
-}
-.btn:active{transform:scale(.97);opacity:.9;box-shadow:0 2px 10px rgba(124,92,255,0.15);}
-.btn:disabled{opacity:.4;cursor:not-allowed;}
-.btn.ghost{
-  background:transparent;
-  border:1px solid var(--edge);
-  color:var(--txt);
-  box-shadow:none;
-}
-.btn.ghost:active{background:rgba(255,255,255,0.04);}
-.btn.danger{background:var(--red);color:#fff;box-shadow:0 4px 20px rgba(255,71,87,.2);}
+/* QTY */
+.qty{display:flex;align-items:center;background:var(--card);border:1px solid var(--edge);border-radius:var(--r);overflow:hidden;}
+.qty-btn{width:50px;height:50px;background:none;border:none;color:var(--accent2);font-size:20px;font-weight:700;cursor:pointer;transition:background .1s;}
+.qty-btn:active{background:rgba(108,92,231,.1);}
+.qty-val{flex:1;text-align:center;font-size:20px;font-weight:800;}
 
-/* ══ NOTICE ══ */
-.notice{
-  padding:12px 14px;
-  border-radius:var(--r);
-  font-size:12px;
-  text-align:center;
-  margin-top:10px;
-  display:none;
-  font-family:var(--mono);
-}
-.notice.ok {background:rgba(124,92,255,.1);border:1px solid rgba(124,92,255,.3);color:var(--accent);display:block;}
-.notice.err{background:rgba(255,71,87,.1);border:1px solid rgba(255,71,87,.3);color:var(--red);display:block;}
-
-/* ══ PROFILE CARD ══ */
-.prof-card{
-  margin:16px 0 10px;
-  background:var(--card);
-  border:1px solid var(--edge);
-  border-radius:18px;
-  overflow:hidden;
-  cursor:pointer;
-  transition:border-color .15s;
-}
-.prof-card:active{border-color:var(--accent);}
-.prof-top{
-  padding:20px 18px 16px;
-  display:flex;align-items:center;gap:14px;
-  background:linear-gradient(135deg,rgba(200,241,53,0.06) 0%,transparent 60%);
-}
-.prof-ava{
-  width:56px;height:56px;
-  border-radius:50%;
-  background:var(--grad);
-  display:flex;align-items:center;justify-content:center;
-  font-size:26px;
-  overflow:hidden;
-  flex-shrink:0;
-  border:2px solid rgba(124,92,255,0.3);
-}
-.prof-ava img{width:100%;height:100%;object-fit:cover;}
-.prof-name{font-family:var(--head);font-size:15px;font-weight:700;letter-spacing:-.3px;}
-.prof-phone{font-size:11px;color:var(--muted);margin-top:3px;}
-.prof-edit{
-  margin-left:auto;
-  font-size:10px;color:var(--accent);
-  font-family:var(--mono);
-  letter-spacing:.5px;
-}
-
-/* ══ MENU GRID ══ */
-.menu-grid{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:10px;
-  margin-bottom:10px;
-}
-.menu-tile{
-  background:var(--card);
-  border:1px solid var(--edge);
-  border-radius:18px;
-  padding:20px 16px;
-  cursor:pointer;
-  transition:border-color .15s,transform .1s;
-  position:relative;
-  overflow:hidden;
-}
-.menu-tile:active{transform:scale(.97);border-color:var(--accent);}
-.menu-tile::before{
-  content:'';
-  position:absolute;top:0;left:0;right:0;height:2px;
-}
-.menu-tile.t-order::before{background:var(--accent);}
-.menu-tile.t-hist::before{background:var(--blue);}
-.menu-tile.t-set::before{background:var(--muted);}
-.tile-ico{font-size:28px;margin-bottom:12px;}
-.tile-name{font-family:var(--head);font-size:12px;font-weight:700;letter-spacing:-.2px;}
-.tile-desc{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4;}
-.menu-tile-wide{
-  grid-column:1/-1;
-}
-
-/* ══ BACK ══ */
-.back{
-  display:inline-flex;align-items:center;gap:8px;
-  background:none;border:none;
-  color:var(--accent);font-family:var(--mono);font-size:11px;
-  letter-spacing:.5px;
-  padding:8px 0 16px;cursor:pointer;
-  text-transform:uppercase;
-}
-
-/* ══ SCREEN TITLE ══ */
-.stitle{
-  font-family:var(--head);
-  font-size:20px;font-weight:900;
-  letter-spacing:-1px;
-  margin-bottom:20px;
-  line-height:1.1;
-}
-.stitle span{color:var(--accent);}
-
-/* ══ QTY ══ */
-.qty-wrap{
-  display:flex;align-items:center;gap:0;
-  background:var(--card);
-  border:1px solid var(--edge);
-  border-radius:var(--r);
-  overflow:hidden;
-}
-.qty-btn{
-  width:52px;height:52px;
-  background:none;border:none;
-  color:var(--accent);font-size:22px;font-weight:700;
-  cursor:pointer;
-  transition:background .1s;
-  flex-shrink:0;
-  font-family:var(--head);
-}
-.qty-btn:active{background:rgba(124,92,255,.08);}
-.qty-divider{width:1px;background:var(--edge);height:32px;flex-shrink:0;}
-.qty-val{
-  flex:1;text-align:center;
-  font-family:var(--head);
-  font-size:22px;font-weight:900;
-  color:var(--txt);
-}
-
-/* ══ FILE DROP ══ */
-.drop{
-  border:1.5px dashed rgba(124,92,255,0.25);
-  border-radius:var(--r);
-  padding:28px 16px;
-  text-align:center;
-  cursor:pointer;
-  transition:border-color .2s,background .2s;
-}
-.drop:hover{border-color:var(--accent);background:rgba(124,92,255,.03);}
-.drop-ico{font-size:30px;margin-bottom:8px;}
-.drop-txt{font-size:11px;color:var(--muted);line-height:1.6;}
-.drop-hint{font-size:10px;color:rgba(90,94,114,.6);margin-top:4px;}
-.file-chip{
-  display:flex;align-items:center;gap:10px;
-  background:rgba(124,92,255,.07);
-  border:1px solid rgba(124,92,255,.2);
-  border-radius:var(--r);
-  padding:12px 14px;
-  margin-top:10px;
-}
-.file-chip-name{flex:1;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.file-chip-rm{color:var(--red);cursor:pointer;font-size:18px;}
-
-/* ══ ORDER CARDS ══ */
-.ord-list{display:flex;flex-direction:column;gap:10px;}
-.ord-card{
-  background:var(--card);
-  border:1px solid var(--edge);
-  border-radius:18px;
-  padding:16px;
-  cursor:pointer;
-  transition:border-color .15s,transform .1s;
-  position:relative;
-  overflow:hidden;
-}
-.ord-card:active{transform:scale(.98);}
-.ord-card:hover{border-color:rgba(124,92,255,.25);}
-.ord-stripe{
-  position:absolute;left:0;top:0;bottom:0;width:3px;
-}
-.ord-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;}
-.ord-id{font-family:var(--head);font-size:14px;font-weight:700;letter-spacing:-.3px;}
-.pill{
-  font-size:10px;padding:4px 10px;
-  border-radius:20px;font-weight:700;
-  letter-spacing:.3px;white-space:nowrap;
-  font-family:var(--mono);
-}
-.pill-new    {background:rgba(255,149,0,.12);color:var(--orange);}
-.pill-ok     {background:rgba(124,92,255,.15);color:var(--accent);}
-.pill-bad    {background:rgba(255,71,87,.12);color:var(--red);}
-.pill-prep   {background:rgba(91,140,255,.12);color:var(--accent2);}
-.pill-price  {background:rgba(0,212,170,.12);color:var(--teal);}
-.pill-paid   {background:rgba(124,92,255,.18);color:var(--accent);}
-.pill-print  {background:rgba(91,140,255,.18);color:var(--accent2);}
-.pill-ready  {background:rgba(0,212,170,.18);color:var(--teal);}
-.ord-info{
-  display:grid;grid-template-columns:1fr 1fr;
-  gap:4px 10px;
-}
-.ord-row{
-  font-size:11px;color:var(--muted);
-  display:flex;align-items:center;gap:5px;
-}
-.ord-row strong{color:var(--txt);font-weight:400;}
-
-/* ══ DETAIL ══ */
-.det-card{
-  background:var(--card);
-  border:1px solid var(--edge);
-  border-radius:18px;
-  overflow:hidden;
-  margin-bottom:14px;
-}
-.det-row{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:14px 18px;
-  border-bottom:1px solid var(--edge);
-}
-.det-row:last-child{border-bottom:none;}
-.det-lbl{font-size:11px;color:var(--muted);letter-spacing:.3px;}
-.det-val{font-size:13px;font-weight:700;text-align:right;max-width:58%;word-break:break-word;}
-
-/* ══ SETTINGS ══ */
-.ava-big-wrap{
-  display:flex;justify-content:center;
-  padding:24px 0 8px;
-}
-.ava-big{
-  width:84px;height:84px;
-  border-radius:50%;
-  background:var(--grad);
-  display:flex;align-items:center;justify-content:center;
-  font-size:38px;
-  overflow:hidden;
-  cursor:pointer;
-  border:3px solid rgba(124,92,255,.35);
-  box-shadow:0 0 40px rgba(124,92,255,.2);
-  transition:box-shadow .2s;
-}
-.ava-big:active{box-shadow:0 0 60px rgba(124,92,255,.4);}
-.ava-big img{width:100%;height:100%;object-fit:cover;}
-.ava-hint{text-align:center;font-size:10px;color:var(--muted);margin-bottom:20px;letter-spacing:.3px;}
-.ava-hint a{color:var(--accent);text-decoration:none;}
-.ava-opts{
-  display:grid;grid-template-columns:1fr 1fr 1fr;
-  gap:8px;margin-bottom:20px;
-}
-.ava-opt{
-  background:var(--card);
-  border:1px solid var(--edge);
-  border-radius:var(--r);
-  padding:12px 6px;
-  text-align:center;
-  cursor:pointer;
-  font-size:11px;color:var(--muted);
-  transition:border-color .15s,color .15s;
-  line-height:1.5;
-}
-.ava-opt:active{border-color:var(--accent);color:var(--txt);}
-.ava-opt .opt-ico{font-size:20px;display:block;margin-bottom:4px;}
-
-.theme-opts{
-  display:grid;grid-template-columns:1fr 1fr 1fr;
-  gap:8px;margin-bottom:20px;
-}
-.theme-opt{
-  background:var(--card);
-  border:1px solid var(--edge);
-  border-radius:var(--r);
-  padding:12px 8px;
-  text-align:center;
-  cursor:pointer;
-  font-size:11px;color:var(--muted);
-  transition:all .15s;
-  line-height:1.5;
-}
-.theme-opt.selected{
-  border-color:var(--accent);
-  color:var(--accent);
-  background:rgba(124,92,255,.06);
-}
-
-/* ══ DIVIDER ══ */
-.divider{
-  height:1px;background:var(--edge);
-  margin:20px 0;
-  position:relative;
-}
-.divider::after{
-  content:attr(data-label);
-  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
-  background:var(--ink);
-  padding:0 10px;
-  font-size:9px;letter-spacing:1.5px;text-transform:uppercase;
-  color:var(--muted);
-}
-
-/* ══ MODAL ══ */
-.modal-bg{
-  position:fixed;inset:0;
-  background:rgba(0,0,0,.85);
-  backdrop-filter:blur(10px);
-  z-index:9999;
-  display:flex;align-items:flex-end;justify-content:center;
-  animation:fadein .2s ease;
-}
-@keyframes fadein{from{opacity:0;}to{opacity:1;}}
-.modal-sheet{
-  background:var(--paper);
-  border:1px solid var(--edge);
-  border-radius:24px 24px 0 0;
-  padding:24px;
-  width:100%;max-width:500px;
-  animation:slideup .25s cubic-bezier(.22,1,.36,1);
-}
-@keyframes slideup{from{transform:translateY(100%);}to{transform:translateY(0);}}
-.modal-sheet h3{
-  font-family:var(--head);
-  font-size:16px;font-weight:900;
-  letter-spacing:-.3px;
-  margin-bottom:18px;
-  text-align:center;
-}
-.modal-btns{display:flex;gap:10px;margin-top:18px;}
-.modal-btn{
-  flex:1;padding:14px;border-radius:var(--r);
-  border:none;font-family:var(--head);font-size:12px;font-weight:700;
-  cursor:pointer;letter-spacing:.3px;
-}
-.mb-cancel{background:rgba(255,71,87,.12);color:var(--red);}
-.mb-ok    {background:var(--grad);color:#fff;}
-.cropper-view-box,.cropper-face{border-radius:50%;}
-.emoji-inp{
-  width:100%;padding:16px;
-  font-size:36px;text-align:center;
-  background:var(--card);border:1px solid var(--edge);
-  border-radius:var(--r);color:var(--txt);
-  font-family:var(--mono);
-}
-
-/* ══ EMPTY ══ */
+/* EMPTY */
 .empty{text-align:center;padding:60px 20px;}
-.empty-ico{font-size:52px;margin-bottom:14px;opacity:.5;}
-.empty-txt{font-size:12px;color:var(--muted);line-height:1.6;}
-.loading{text-align:center;padding:50px;color:var(--muted);font-size:12px;letter-spacing:.5px;}
+.empty-icon{font-size:56px;margin-bottom:16px;opacity:.6;}
+.empty-title{font-size:18px;font-weight:700;margin-bottom:8px;}
+.empty-text{font-size:13px;color:var(--txt2);line-height:1.6;}
 
-/* ══ ANIMATE ══ */
-@keyframes up{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:translateY(0);}}
-.up{animation:up .32s cubic-bezier(.22,1,.36,1) both;}
-.d1{animation-delay:.04s;}.d2{animation-delay:.08s;}.d3{animation-delay:.12s;}.d4{animation-delay:.16s;}.d5{animation-delay:.2s;}
+/* SECTION */
+.section-label{font-size:11px;font-weight:700;color:var(--accent2);text-transform:uppercase;letter-spacing:1.5px;margin:20px 0 12px;}
 
-.hidden{display:none!important;}
+/* TOAST */
+.toast{position:fixed;top:calc(20px + var(--safe-top));left:16px;right:16px;z-index:9999;padding:14px 18px;border-radius:var(--r);font-size:14px;font-weight:500;text-align:center;transform:translateY(-100px);opacity:0;transition:all .3s cubic-bezier(.22,1,.36,1);}
+.toast.show{transform:translateY(0);opacity:1;}
+.toast-ok{background:rgba(0,184,148,.9);color:#fff;}
+.toast-err{background:rgba(255,107,107,.9);color:#fff;}
+::-webkit-scrollbar{width:0;height:0;}
 
-/* Light mode */
-body.light{
-  background:#f0f2f5;
-  --ink:#f0f2f5;--paper:#ffffff;--card:#ffffff;
-  --edge:rgba(0,0,0,0.08);--txt:#111318;--muted:#888ea6;
-}
-body.light .hdr{background:rgba(240,242,245,.92);}
-body.light ::-webkit-scrollbar-track{background:#f0f2f5;}
+/* THEMES */
+.theme-purple{--bg:#0d0815;--bg2:#130d20;--card:#1a1030;--card2:#221540;--edge:rgba(180,120,255,.1);--accent:#9b59b6;--accent2:#c39bd3;--grad:linear-gradient(135deg,#9b59b6 0%,#c39bd3 50%,#d7bde2 100%);--grad2:linear-gradient(135deg,#9b59b6 0%,#c39bd3 100%);}
+.theme-blue{--bg:#060d15;--bg2:#0a1520;--card:#0f1f30;--card2:#152535;--edge:rgba(80,160,255,.1);--accent:#2980b9;--accent2:#5dade2;--grad:linear-gradient(135deg,#2980b9 0%,#5dade2 50%,#85c1e9 100%);--grad2:linear-gradient(135deg,#2980b9 0%,#5dade2 100%);}
+
+/* USER CARD */
+.user-card{background:var(--card);border:1px solid var(--edge);border-radius:var(--r);padding:16px;margin-bottom:10px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:all .15s;}
+.user-card:active{transform:scale(.98);border-color:var(--accent);}
+.user-avatar{width:48px;height:48px;border-radius:50%;background:var(--grad2);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;overflow:hidden;border:2px solid rgba(108,92,231,.3);}
+.user-avatar img{width:100%;height:100%;object-fit:cover;}
+.user-info{flex:1;min-width:0;}
+.user-name{font-size:15px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.user-phone{font-size:12px;color:var(--txt2);margin-top:2px;}
+.user-arrow{color:var(--txt2);font-size:18px;}
+
+/* REG MODAL */
+.modal-bg{position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);display:none;align-items:flex-end;justify-content:center;}
+.modal-bg.show{display:flex;}
+.modal-sheet{background:var(--bg2);border:1px solid var(--edge);border-radius:24px 24px 0 0;padding:28px 20px calc(20px + var(--safe-bot));width:100%;max-width:500px;animation:su .3s cubic-bezier(.22,1,.36,1);}
+@keyframes su{from{transform:translateY(100%);}to{transform:translateY(0);}}
+.modal-title{font-size:20px;font-weight:800;text-align:center;margin-bottom:6px;}
+.modal-sub{font-size:13px;color:var(--txt2);text-align:center;margin-bottom:20px;}
+
+/* ADMIN TABS */
+.adm-tabs{display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;}
+.adm-tab{padding:8px 16px;border-radius:20px;background:var(--card);border:1px solid var(--edge);font-size:12px;font-weight:600;color:var(--txt2);cursor:pointer;white-space:nowrap;transition:all .15s;}
+.adm-tab.on{background:rgba(108,92,231,.15);border-color:rgba(108,92,231,.3);color:var(--accent2);}
 </style>
-<link href="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/cropperjs@1.5.13/dist/cropper.min.js"></script>
 </head>
 <body>
 
-<!-- HEADER -->
-<header class="hdr">
-  <div class="hdr-brand">
-    <div class="hdr-icon">🖨️</div>
-    <div>
-      <div class="hdr-name">3Dprinti</div>
-      <span class="hdr-tag">3D печать на заказ</span>
-    </div>
-  </div>
-</header>
+<div class="splash" id="splash">
+  <div class="splash-logo">🖨️</div>
+  <div class="splash-title">3Dprinti</div>
+  <div class="splash-sub">3D печать на заказ</div>
+  <div class="splash-loader"></div>
+</div>
 
-<div class="wrap">
+<div class="toast" id="toast"></div>
 
-  <!-- ══ REGISTER ══ -->
-  <div id="sReg" class="screen">
-    <div class="reg-hero up">
-      <div class="reg-orb">🖨️</div>
-      <div class="reg-title">Привет!<br>Давай знакомиться</div>
-      <div class="reg-sub" style="margin-top:8px;">Укажи имя и телефон,<br>чтобы оформить заказ</div>
-    </div>
-    <div class="f up d1">
-      <label class="lbl">// Твоё имя</label>
-      <input id="rName" type="text" class="inp" placeholder="Александр Иванов">
-    </div>
-    <div class="f up d2">
-      <label class="lbl">// Телефон</label>
-      <input id="rPhone" type="tel" class="inp" placeholder="+375 XX XXX-XX-XX">
-    </div>
-    <button class="btn up d3" id="rBtn">Начать →</button>
-    <div id="rNote" class="notice"></div>
-  </div>
-
-  <!-- ══ MAIN ══ -->
-  <div id="sMain" class="screen">
-    <div class="prof-card up" id="profCard">
-      <div class="prof-top">
-        <div class="prof-ava" id="profAva">
-          <span id="profAvaT">👤</span>
-          <img id="profAvaI" style="display:none">
-        </div>
-        <div>
-          <div class="prof-name" id="profName">Гость</div>
-          <div class="prof-phone" id="profPhone">не указан</div>
-        </div>
-        <div class="prof-edit">EDIT →</div>
-      </div>
-    </div>
-
-    <div class="menu-grid">
-      <div class="menu-tile t-order up d1" data-go="order">
-        <div class="tile-ico">📦</div>
-        <div class="tile-name">Новый<br>заказ</div>
-        <div class="tile-desc">Оформить<br>3D-печать</div>
-      </div>
-      <div class="menu-tile t-hist up d2" data-go="history">
-        <div class="tile-ico">📋</div>
-        <div class="tile-name">Мои<br>заказы</div>
-        <div class="tile-desc">История<br>и статусы</div>
-      </div>
-      <div class="menu-tile t-set menu-tile-wide up d3" data-go="settings">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <div>
-            <div class="tile-name">⚙️ &nbsp;Настройки</div>
-            <div class="tile-desc">Профиль, аватар, тема</div>
-          </div>
-          <div style="font-size:22px;opacity:.3;">→</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ══ NEW ORDER ══ -->
-  <div id="sOrder" class="screen">
-    <button class="back" id="bkOrder">← НАЗАД</button>
-    <div class="stitle up">Новый<br><span>заказ</span></div>
-    <div class="f up d1">
-      <label class="lbl">// Что печатаем?</label>
-      <textarea id="oDesc" rows="3" class="inp" placeholder="Опиши модель: название, размеры, материал, цвет..."></textarea>
-    </div>
-    <div class="f up d2">
-      <label class="lbl">// Количество</label>
-      <div class="qty-wrap">
-        <button class="qty-btn" id="qMinus">−</button>
-        <div class="qty-divider"></div>
-        <div class="qty-val" id="qVal">1</div>
-        <div class="qty-divider"></div>
-        <button class="qty-btn" id="qPlus">+</button>
-      </div>
-    </div>
-    <div class="f up d3">
-      <label class="lbl">// Файл / фото <span style="color:var(--muted);text-transform:none;letter-spacing:0;">(необязательно)</span></label>
-      <div class="drop" id="dropZone">
-        <div class="drop-ico">📎</div>
-        <div class="drop-txt">Нажми или перетащи файл сюда</div>
-        <div class="drop-hint">STL · OBJ · 3MF · JPG · PNG</div>
-        <input type="file" id="fInput" accept=".stl,.obj,.3mf,.jpg,.png,.jpeg" style="display:none">
-      </div>
-      <div id="fChip" class="file-chip hidden">
-        <span style="font-size:16px;">📄</span>
-        <span class="file-chip-name" id="fName"></span>
-        <span class="file-chip-rm" id="fRm">✕</span>
-      </div>
-    </div>
-    <button class="btn up d4" id="oSend">Отправить заказ ✓</button>
-    <div id="oNote" class="notice"></div>
-  </div>
-
-  <!-- ══ HISTORY ══ -->
-  <div id="sHist" class="screen">
-    <button class="back" id="bkHist">← НАЗАД</button>
-    <div class="stitle up">Мои<br><span>заказы</span></div>
-    <div class="ord-list" id="ordList"></div>
-  </div>
-
-  <!-- ══ DETAIL ══ -->
-  <div id="sDet" class="screen">
-    <button class="back" id="bkDet">← НАЗАД</button>
-    <div class="stitle up">Заказ<br><span id="detNum">#000</span></div>
-    <div id="detBody"></div>
-  </div>
-
-  <!-- ══ SETTINGS ══ -->
-  <div id="sSet" class="screen">
-    <button class="back" id="bkSet">← НАЗАД</button>
-    <div class="stitle up">Настройки</div>
-
-    <div class="ava-big-wrap up">
-      <div class="ava-big" id="avaBig">
-        <span id="avaBigT">👤</span>
-        <img id="avaBigI" style="display:none">
-      </div>
-    </div>
-    <div class="ava-hint up d1">Нажми на аватар чтобы изменить</div>
-
-    <div class="ava-opts up d2">
-      <div class="ava-opt" id="avaPhoto">
-        <span class="opt-ico">🖼️</span>Фото
-      </div>
-      <div class="ava-opt" id="avaEmoji">
-        <span class="opt-ico">😊</span>Эмодзи
-      </div>
-      <div class="ava-opt" id="avaRm" style="color:var(--red);">
-        <span class="opt-ico">🗑️</span>Удалить
-      </div>
-    </div>
-
-    <div class="divider" data-label="профиль"></div>
-
-    <div class="f up d3">
-      <label class="lbl">// Имя</label>
-      <input id="sName" type="text" class="inp" placeholder="Имя">
-    </div>
-    <div class="f up d3">
-      <label class="lbl">// Телефон</label>
-      <input id="sPhone" type="tel" class="inp" placeholder="+375 XX XXX-XX-XX">
-    </div>
-
-    <div class="divider" data-label="тема"></div>
-    <label class="lbl up d4">// Оформление</label>
-    <div class="theme-opts up d4">
-      <div class="theme-opt" data-theme="auto" id="thAuto">✨ Авто</div>
-      <div class="theme-opt" data-theme="dark" id="thDark">🌙 Тёмная</div>
-      <div class="theme-opt" data-theme="light" id="thLight">☀️ Светлая</div>
-    </div>
-
-    <button class="btn up d5" id="sSave">Сохранить ✓</button>
-    <div id="sNote" class="notice"></div>
-  </div>
-
-</div><!-- /wrap -->
-
-<!-- CROPPER MODAL -->
-<div id="mCrop" class="modal-bg hidden">
+<!-- NOTIF MODAL -->
+<div class="modal-bg" id="notifModal">
   <div class="modal-sheet">
-    <h3>Обрезать фото</h3>
-    <img id="cropImg" style="max-width:100%;max-height:50vh;display:block;border-radius:12px;">
-    <div class="modal-btns">
-      <button class="modal-btn mb-cancel" id="cropCancel">Отмена</button>
-      <button class="modal-btn mb-ok"     id="cropOk">Сохранить</button>
+    <div style="text-align:center;font-size:48px;margin-bottom:16px;">🔔</div>
+    <div class="modal-title">Включить уведомления?</div>
+    <div class="modal-sub">Получай сообщения о статусе заказов и новых обновлениях</div>
+    <button class="btn btn-primary" onclick="enableNotifs()" style="margin-bottom:10px;">Разрешить уведомления</button>
+    <button class="btn btn-ghost" onclick="skipNotifs()">Позже</button>
+  </div>
+</div>
+
+<!-- REG MODAL -->
+<div class="modal-bg" id="regModal">
+  <div class="modal-sheet">
+    <div class="modal-title">Добро пожаловать!</div>
+    <div class="modal-sub">Заполни данные чтобы начать</div>
+    <div class="input-group">
+      <label class="input-label">Имя</label>
+      <input class="input" id="regName" placeholder="Как тебя зовут?">
+    </div>
+    <div class="input-group">
+      <label class="input-label">Телефон</label>
+      <input class="input" id="regPhone" placeholder="+375 XX XXX-XX-XX" type="tel" oninput="formatRegPhone(this)" value="+375 ">
+    </div>
+    <button class="btn btn-primary" onclick="doRegister()">Начать ✓</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div class="page active" id="pageHome">
+  <div class="page-header">
+    <div class="page-title">Привет, <span id="userName">Гость</span> 👋</div>
+    <div class="page-avatar" id="homeAvatar" onclick="goPage('pageProfile')">👤</div>
+  </div>
+  <div class="stats">
+    <div class="stat-card"><div class="stat-icon">📦</div><div class="stat-val" id="statOrders">0</div><div class="stat-label">Всего заказов</div></div>
+    <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-val" id="statActive">0</div><div class="stat-label">В работе</div></div>
+  </div>
+  <div class="section-label">Быстрые действия</div>
+  <div class="card" onclick="tryNewOrder()" style="cursor:pointer;display:flex;align-items:center;gap:14px;">
+    <div style="width:48px;height:48px;background:var(--grad2);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;">📦</div>
+    <div><div style="font-size:16px;font-weight:700;">Новый заказ</div><div style="font-size:13px;color:var(--txt2);">Оформить 3D-печать</div></div>
+    <div style="margin-left:auto;color:var(--txt2);font-size:20px;">→</div>
+  </div>
+  <div class="card" onclick="loadMyOrders();goPage('pageOrders')" style="cursor:pointer;display:flex;align-items:center;gap:14px;">
+    <div style="width:48px;height:48px;background:rgba(116,185,255,.12);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:22px;">📋</div>
+    <div><div style="font-size:16px;font-weight:700;">Мои заказы</div><div style="font-size:13px;color:var(--txt2);">История и статусы</div></div>
+    <div style="margin-left:auto;color:var(--txt2);font-size:20px;">→</div>
+  </div>
+  <div class="section-label">Последние заказы</div>
+  <div id="recentOrders"><div class="empty" style="padding:30px"><div class="empty-text">Заказов пока нет</div></div></div>
+</div>
+
+<!-- NEW ORDER -->
+<div class="page" id="pageNewOrder">
+  <div class="page-header"><div class="page-title">Новый <span>заказ</span></div></div>
+  <div class="input-group"><label class="input-label">Что печатаем?</label><textarea class="textarea" id="oDesc" placeholder="Опиши модель: название, размеры, материал, цвет..."></textarea></div>
+  <div class="input-group"><label class="input-label">Количество</label><div class="qty"><button class="qty-btn" onclick="changeQty(-1)">−</button><div class="qty-val" id="qtyVal">1</div><button class="qty-btn" onclick="changeQty(1)">+</button></div></div>
+  <button class="btn btn-primary" onclick="sendOrder()">Отправить заказ ✓</button>
+</div>
+
+<!-- ORDERS -->
+<div class="page" id="pageOrders">
+  <div class="page-header"><div class="page-title">Мои <span>заказы</span></div></div>
+  <div id="ordersList"></div>
+</div>
+
+<!-- ORDER DETAIL -->
+<div class="page" id="pageOrderDetail">
+  <div class="page-header"><div class="page-title">Заказ <span id="detNum">#0</span></div></div>
+  <div id="detBody"></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="pageSettings">
+  <div class="page-header"><div class="page-title">Настройки</div></div>
+  
+  <div class="card" style="display:flex;align-items:center;gap:14px;">
+    <div class="user-avatar" style="width:56px;height:56px;font-size:24px;border:2px solid var(--accent);" id="settingsAvatar">👤</div>
+    <div><div style="font-size:16px;font-weight:700;" id="settingsName">Гость</div><div style="font-size:13px;color:var(--txt2);" id="settingsPhone">не указан</div></div>
+    <div style="margin-left:auto;"><button class="btn btn-ghost" style="width:auto;padding:8px 16px;font-size:12px;" onclick="goPage('pageProfile')">Изменить</button></div>
+  </div>
+
+  <div class="section-label">Приложение</div>
+
+  <div class="card" onclick="goPage('pageProfile')" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:20px;">👤</div>
+    <div style="flex:1;"><div style="font-weight:600;">Профиль</div><div style="font-size:12px;color:var(--txt2);">Имя, телефон, аватар</div></div>
+    <div style="color:var(--txt2);">›</div>
+  </div>
+
+  <div class="card" onclick="goPage('pageAppSettings')" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:20px;">🎨</div>
+    <div style="flex:1;"><div style="font-weight:600;">Внешний вид</div><div style="font-size:12px;color:var(--txt2);">Тема, цвета, оформление</div></div>
+    <div style="color:var(--txt2);">›</div>
+  </div>
+
+  <div class="card" onclick="window.open('instructions.html','_blank')" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:20px;">📖</div>
+    <div style="flex:1;"><div style="font-weight:600;">Инструкция</div><div style="font-size:12px;color:var(--txt2);">Как пользоваться приложением</div></div>
+    <div style="color:var(--txt2);">→</div>
+  </div>
+
+  <div class="card" onclick="goPage('pageAbout')" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:20px;">ℹ️</div>
+    <div style="flex:1;"><div style="font-weight:600;">О приложении</div><div style="font-size:12px;color:var(--txt2);">Версия 2.0</div></div>
+    <div style="color:var(--txt2);">›</div>
+  </div>
+</div>
+
+<!-- APP SETTINGS -->
+<div class="page" id="pageAppSettings">
+  <div class="page-header"><div class="page-title">Внешний <span>вид</span></div></div>
+
+  <div class="section-label">Тема оформления</div>
+  <div style="display:flex;gap:10px;margin-bottom:20px;">
+    <div class="card" onclick="setTheme('dark')" style="flex:1;cursor:pointer;text-align:center;padding:16px 8px;border:2px solid var(--accent);" id="thDark">
+      <div style="font-size:24px;margin-bottom:6px;">🌙</div>
+      <div style="font-size:12px;font-weight:600;">Тёмная</div>
+    </div>
+    <div class="card" onclick="setTheme('purple')" style="flex:1;cursor:pointer;text-align:center;padding:16px 8px;border:2px solid var(--edge);" id="thPurple">
+      <div style="font-size:24px;margin-bottom:6px;">💜</div>
+      <div style="font-size:12px;font-weight:600;">Фиолетовая</div>
+    </div>
+    <div class="card" onclick="setTheme('blue')" style="flex:1;cursor:pointer;text-align:center;padding:16px 8px;border:2px solid var(--edge);" id="thBlue">
+      <div style="font-size:24px;margin-bottom:6px;">💙</div>
+      <div style="font-size:12px;font-weight:600;">Синяя</div>
+    </div>
+  </div>
+
+  <div class="section-label">Уведомления</div>
+  <div class="card" style="display:flex;align-items:center;justify-content:space-between;">
+    <div><div style="font-weight:600;">Push-уведомления</div><div style="font-size:12px;color:var(--txt2);">О новых заказах и статусах</div></div>
+    <div id="notifToggle" onclick="toggleNotif()" style="width:44px;height:24px;border-radius:12px;background:var(--card2);position:relative;cursor:pointer;transition:background .2s;">
+      <div id="notifDot" style="width:20px;height:20px;border-radius:50%;background:var(--txt2);position:absolute;top:2px;left:2px;transition:all .2s;"></div>
+    </div>
+  </div>
+
+  <div class="section-label">Данные</div>
+  <div class="card" onclick="clearCache()" style="cursor:pointer;display:flex;align-items:center;gap:12px;">
+    <div style="font-size:20px;">🗑️</div>
+    <div style="flex:1;"><div style="font-weight:600;">Очистить кэш</div><div style="font-size:12px;color:var(--txt2);">Удалить временные данные</div></div>
+    <div style="color:var(--txt2);">›</div>
+  </div>
+</div>
+
+<!-- PROFILE -->
+<div class="page" id="pageProfile">
+  <div class="page-header"><div class="page-title">Профиль</div></div>
+  <div style="text-align:center;padding:20px 0;">
+    <div class="user-avatar" style="width:80px;height:80px;margin:0 auto 12px;font-size:36px;border:3px solid var(--accent);box-shadow:0 0 40px rgba(108,92,231,.2);" id="profileAvatar">👤</div>
+  </div>
+  <div class="input-group"><label class="input-label">Имя</label><input class="input" id="pName" placeholder="Ваше имя"></div>
+  <div class="input-group"><label class="input-label">Телефон</label><input class="input" id="pPhone" placeholder="+375 XX XXX-XX-XX" type="tel"></div>
+  <button class="btn btn-primary" onclick="saveProfile()" style="margin-bottom:12px;">Сохранить ✓</button>
+</div>
+
+<!-- ABOUT -->
+<div class="page" id="pageAbout">
+  <div class="page-header"><div class="page-title">О приложении</div></div>
+  <div class="card" style="text-align:center;padding:30px;">
+    <div style="width:64px;height:64px;background:var(--grad);border-radius:18px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 16px;">🖨️</div>
+    <div style="font-size:20px;font-weight:800;margin-bottom:4px;">3Dprinti</div>
+    <div style="font-size:13px;color:var(--txt2);margin-bottom:20px;" id="appVersion" onclick="devTap()">Версия 2.0</div>
+    <div style="font-size:13px;color:var(--txt2);line-height:1.8;">
+      Сервис 3D печати на заказ<br>
+      Telegram бот + мобильное приложение
+    </div>
+  </div>
+
+  <div class="section-label">Разработка</div>
+  <div class="card">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div style="font-size:20px;">👨‍💻</div>
+      <div><div style="font-weight:600;">Разработчик</div><div style="font-size:12px;color:var(--txt2);">Vlad Stolbov</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+      <div style="font-size:20px;">🤖</div>
+      <div><div style="font-weight:600;">Бот</div><div style="font-size:12px;color:var(--txt2);">Telegram Bot + Mini App</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div style="font-size:20px;">🌐</div>
+      <div><div style="font-weight:600;">Сайт</div><div style="font-size:12px;color:var(--txt2);">vladst6001.github.io</div></div>
+    </div>
+  </div>
+
+  <div id="devModeSection" style="display:none;">
+    <div class="section-label">Админ-панель</div>
+    <div class="input-group">
+      <label class="input-label">Пароль</label>
+      <input class="input" id="adminPassInput" type="password" placeholder="Введите пароль">
+    </div>
+    <button class="btn btn-primary" onclick="unlockAdmin()" style="margin-bottom:12px;">Запросить доступ →</button>
+    <div style="font-size:11px;color:var(--txt2);text-align:center;line-height:1.6;">
+      После ввода пароля запрос уйдёт в Telegram.<br>
+      Админ подтвердит — и админка активируется.
     </div>
   </div>
 </div>
 
-<!-- EMOJI MODAL -->
-<div id="mEmoji" class="modal-bg hidden">
-  <div class="modal-sheet">
-    <h3>Введи эмодзи</h3>
-    <input type="text" id="emojiInp" class="emoji-inp" placeholder="😊">
-    <div class="modal-btns">
-      <button class="modal-btn mb-cancel" id="emojiCancel">Отмена</button>
-      <button class="modal-btn mb-ok"     id="emojiOk">Ок</button>
-    </div>
+<!-- ADMIN -->
+<div class="page" id="pageAdmin">
+  <div class="page-header"><div class="page-title">🛠 <span>Админ</span></div></div>
+  <div class="adm-tabs" id="admTabs">
+    <div class="adm-tab on" onclick="admTab(this,'new')">🆕 Новые</div>
+    <div class="adm-tab" onclick="admTab(this,'active')">⚡ В работе</div>
+    <div class="adm-tab" onclick="admTab(this,'all')">📋 Все</div>
+    <div class="adm-tab" onclick="admTabUsers(this)">👥 Юзеры</div>
   </div>
+  <div id="admOrdersList"></div>
+</div>
+
+<!-- ADMIN ORDER DETAIL -->
+<div class="page" id="pageAdmDetail">
+  <div class="page-header"><div class="page-title">Заказ <span id="admDetNum">#0</span></div></div>
+  <div id="admDetBody"></div>
+  <div id="admDetNote" class="toast" style="position:relative;top:auto;left:auto;right:auto;transform:none;margin-bottom:12px;"></div>
+  <div class="section-label">Быстрые действия</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+    <button class="btn btn-primary" onclick="admAction('accept')" style="font-size:13px;">✅ Принять</button>
+    <button class="btn" style="background:rgba(255,107,107,.15);color:var(--red);border:1px solid rgba(255,107,107,.3);font-size:13px;" onclick="admAction('reject')">❌ Отказать</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;">
+    <button class="btn" style="background:rgba(253,203,110,.12);color:var(--orange);border:1px solid rgba(253,203,110,.3);font-size:12px;padding:12px 4px;" onclick="admAction('prep')">🟠 Подготовка</button>
+    <button class="btn" style="background:rgba(116,185,255,.12);color:var(--blue);border:1px solid rgba(116,185,255,.3);font-size:12px;padding:12px 4px;" onclick="admAction('print')">🖨️ Печать</button>
+    <button class="btn" style="background:rgba(0,184,148,.12);color:var(--green);border:1px solid rgba(0,184,148,.3);font-size:12px;padding:12px 4px;" onclick="admAction('ready')">🎉 Готова</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px;">
+    <button class="btn" style="background:rgba(0,184,148,.08);color:var(--green);border:1px solid rgba(0,184,148,.2);font-size:12px;" onclick="admAction('paid')">✅ Оплачено</button>
+    <button class="btn" style="background:rgba(108,92,231,.1);color:var(--accent2);border:1px solid rgba(108,92,231,.3);font-size:12px;" onclick="admAction('done')">🏁 Завершить</button>
+  </div>
+  <div class="section-label">Цена за штуку (руб.)</div>
+  <div style="display:flex;gap:8px;margin-bottom:16px;">
+    <input class="input" id="admPriceInp" type="number" placeholder="0" min="0" style="flex:1;">
+    <button class="btn btn-primary" onclick="admSetPrice()" style="width:auto;padding:14px 20px;font-size:13px;">💰 OK</button>
+  </div>
+  <div class="section-label">Статус вручную</div>
+  <select class="input" id="admStatusSel" style="appearance:auto;margin-bottom:12px;">
+    <option value="новый">🟡 Новый</option>
+    <option value="принят">🟢 Принят</option>
+    <option value="подготовка модели">🟠 Подготовка модели</option>
+    <option value="цена выставлена">💰 Цена выставлена</option>
+    <option value="оплачено наличными">✅ Оплачено наличными</option>
+    <option value="печать">🖨️ Печать</option>
+    <option value="готова">🎉 Готова</option>
+    <option value="завершён">🏁 Завершён</option>
+    <option value="отказ">🔴 Отказ</option>
+  </select>
+  <button class="btn btn-ghost" onclick="admSetStatus()">Применить статус →</button>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav" id="bottomNav">
+  <div class="nav-item active" onclick="goPage('pageHome')"><div class="nav-icon">🏠</div><div>Главная</div></div>
+  <div class="nav-item" onclick="loadMyOrders();goPage('pageOrders')"><div class="nav-icon">📋</div><div>Заказы</div></div>
+  <div class="nav-item" id="navAdmin" style="display:none" onclick="tryAdmin()"><div class="nav-icon">🛠</div><div>Админ</div></div>
+  <div class="nav-item" onclick="goPage('pageSettings')"><div class="nav-icon">⚙️</div><div>Настройки</div></div>
 </div>
 
 <script>
-/* ── TG ── */
-const tg = window.Telegram?.WebApp || {
-  ready:()=>{},expand:()=>{},close:()=>{},colorScheme:'dark',
-  initDataUnsafe:{user:{id:0,username:'test',first_name:'Тест'}},
-  MainButton:{setText:()=>{},onClick:()=>{},show:()=>{},hide:()=>{}}
-};
-tg.ready();tg.expand();
-
-const API = 'https://threedff.onrender.com';
-let profile = {name:'',phone:'',emoji:'👤',avatarUrl:null,registered:false,theme:'auto'};
-let qty=1, selFile=null, cropper=null;
-
-/* ── UTILS ── */
+const API='https://threedff.onrender.com';
 const $=id=>document.getElementById(id);
-function dt(s){
-  if(!s||s==='null'||s==='None'||s==='Дата не указана')return'—';
-  const m=s.match(/^(\d{4})-(\d{2})-(\d{2})[\sT](\d{2}):(\d{2})/);
-  return m?`${m[3]}.${m[2]}.${m[1]} ${m[4]}:${m[5]}`:s;
+let profile={name:'',phone:'',avatarUrl:null,registered:false};
+let qty=1;
+
+setTimeout(()=>{const s=$('splash');if(s)s.classList.add('hide');},1800);
+
+/* PUSH NOTIFICATIONS */
+let notifEnabled=localStorage.getItem('3dprinti_notif')!=='false';
+
+function toggleNotif(){
+  if(notifEnabled){
+    notifEnabled=false;
+    localStorage.setItem('3dprinti_notif','false');
+  }else{
+    if('Notification' in window){
+      Notification.requestPermission().then(p=>{
+        if(p==='granted'){
+          notifEnabled=true;
+          localStorage.setItem('3dprinti_notif','true');
+          toast('✅ Уведомления включены');
+          updateNotifUI();
+        }else{
+          toast('⚠️ Разрешение отклонено. Включи в настройках телефона','err');
+        }
+      });
+      return;
+    }else{
+      notifEnabled=true;
+      localStorage.setItem('3dprinti_notif','true');
+    }
+  }
+  updateNotifUI();
+  toast(notifEnabled?'Уведомления включены':'Уведомления выключены');
 }
-function phone(el){
+
+function updateNotifUI(){
+  const tog=$('notifToggle');
+  const dot=$('notifDot');
+  if(!tog||!dot)return;
+  if(notifEnabled){tog.style.background='var(--accent)';dot.style.right='2px';dot.style.left='auto';}
+  else{tog.style.background='var(--card2)';dot.style.left='2px';dot.style.right='auto';}
+}
+
+function requestNotifPermission(){
+  if(!('Notification' in window))return;
+  const asked=localStorage.getItem('3dprinti_notif_asked');
+  if(asked)return;
+  if(Notification.permission==='default'){
+    $('notifModal').classList.add('show');
+  }
+}
+
+function enableNotifs(){
+  localStorage.setItem('3dprinti_notif_asked','1');
+  $('notifModal').classList.remove('show');
+  if('Notification' in window){
+    Notification.requestPermission().then(p=>{
+      if(p==='granted'){
+        notifEnabled=true;localStorage.setItem('3dprinti_notif','true');
+        updateNotifUI();toast('✅ Уведомления включены');
+      }else{
+        toast('⚠️ Включи уведомления в настройках телефона','err');
+      }
+    });
+  }
+}
+
+function skipNotifs(){
+  localStorage.setItem('3dprinti_notif_asked','1');
+  $('notifModal').classList.remove('show');
+}
+
+function sendLocalNotif(title,body){
+  if(!notifEnabled)return;
+  if('Notification' in window&&Notification.permission==='granted'){
+    try{new Notification(title,{body:body,tag:'3dprinti',requireInteraction:false});}catch(e){}
+  }
+}
+
+function checkNotifications(){
+  if(!notifEnabled)return;
+  const uid=getUserId();
+  const lastCheck=localStorage.getItem('3dprinti_last_check')||'0';
+  fetch(`${API}/webapp_orders`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})})
+  .then(r=>r.json()).then(d=>{
+    const orders=d.orders||[];
+    let found=false;
+    orders.forEach(o=>{
+      if(o.created_at>lastCheck&&!found){
+        sendLocalNotif('📦 Заказ #'+o.id,o.model_name+' — '+labelC(o.status));
+        found=true;
+      }
+    });
+    if(orders.length)localStorage.setItem('3dprinti_last_check',orders[0].created_at||String(Date.now()));
+  }).catch(()=>{});
+}
+
+function toast(msg,type='ok'){const t=$('toast');t.textContent=msg;t.className='toast toast-'+type+' show';setTimeout(()=>t.className='toast',3000);}
+
+function goPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  $(id).classList.add('active');
+  const isAdminPage=id==='pageAdmin';
+  document.querySelectorAll('.nav-item').forEach((n,i)=>{
+    if(isAdminPage){n.classList.toggle('active',false);return;}
+    n.classList.toggle('active',
+      (id==='pageHome'&&i===0)||
+      (id==='pageOrders'&&i===1)||
+      (id==='pageNewOrder'&&i===1)||
+      (id==='pageOrderDetail'&&i===1)||
+      (id==='pageSettings'&&i===(adminUnlocked?3:2))||
+      (id==='pageProfile'&&i===(adminUnlocked?3:2))||
+      (id==='pageAbout'&&i===(adminUnlocked?3:2))||
+      (id==='pageAppSettings'&&i===(adminUnlocked?3:2))
+    );
+  });
+  window.scrollTo({top:0});
+}
+
+function getUserId(){const s=localStorage.getItem('3dprinti_uid');if(s)return parseInt(s);const uid=Math.floor(Math.random()*900000000)+100000000;localStorage.setItem('3dprinti_uid',uid);return uid;}
+
+function loadProfile(){
+  const uid=getUserId();
+  fetch(`${API}/get_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})})
+  .then(r=>r.json()).then(d=>{
+    if(d.ok&&d.profile){
+      if(d.profile.name){profile.name=d.profile.name;profile.registered=true;}
+      if(d.profile.phone)profile.phone=d.profile.phone;
+      if(d.profile.avatar_url&&d.profile.avatar_url!=='None'&&d.profile.avatar_url.trim())profile.avatarUrl=d.profile.avatar_url;
+    }
+    refreshUI();
+    if(!profile.registered)showRegModal();
+  }).catch(()=>{refreshUI();showRegModal();});
+}
+
+function refreshUI(){
+  $('userName').textContent=profile.name||'Гость';
+  $('pName').value=profile.name||'';
+  $('pPhone').value=profile.phone||'';
+  $('profileName').textContent=profile.name||'Гость';
+  $('profilePhone').textContent=profile.phone||'не указан';
+  renderAvatar('homeAvatar');
+  renderAvatar('profileAvatar');
+}
+
+function renderAvatar(id){const el=$(id);if(!el)return;if(profile.avatarUrl){el.innerHTML='<img src="'+profile.avatarUrl+'" onerror="this.parentElement.innerHTML=\'👤\'">';}else{el.innerHTML='👤';}}
+
+function showRegModal(){$('regModal').classList.add('show');}
+function hideRegModal(){$('regModal').classList.remove('show');}
+
+function doRegister(){
+  const n=$('regName').value.trim();
+  const p=$('regPhone').value.trim();
+  if(!n){toast('Введите имя','err');return;}
+  if(!validateName(n)){toast('Имя: только буквы, 2-50 символов','err');return;}
+  const digits=p.replace(/[^0-9]/g,'');
+  let phone9=digits;
+  if(digits.startsWith('375'))phone9=digits.substring(3);
+  else if(digits.startsWith('7'))phone9=digits.substring(1);
+  else if(digits.startsWith('8'))phone9=digits.substring(1);
+  if(phone9.length!==9){toast('Нужно 9 цифр (номер Беларуси)','err');return;}
+  const phone=`+375 ${phone9.substring(0,2)} ${phone9.substring(2,5)}-${phone9.substring(5,7)}-${phone9.substring(7,9)}`;
+  profile.name=n;profile.phone=phone;profile.registered=true;
+  const uid=getUserId();
+  fetch(`${API}/save_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,name:n,phone:phone})})
+  .then(()=>{toast('Добро пожаловать, '+n+'!');hideRegModal();refreshUI();})
+  .catch(()=>toast('Ошибка','err'));
+}
+
+function formatRegPhone(el){
   let v=el.value.replace(/[^0-9]/g,'');
   if(v.startsWith('375'))v=v.substring(3);
   else if(v.startsWith('7'))v=v.substring(1);
@@ -763,337 +602,275 @@ function phone(el){
   if(v.length>7)f+='-'+v.substring(7,9);
   el.value=f;
 }
-function setupPhone(el){
-  if(!el)return;
-  el.addEventListener('focus',()=>{if(!el.value)el.value='+375 ';});
-  el.addEventListener('input',()=>phone(el));
+
+function tryNewOrder(){
+  if(!profile.registered){showRegModal();return;}
+  goPage('pageNewOrder');
 }
 
-/* ── THEME ── */
-function applyTheme(t){
-  const dark=t==='dark'||(t==='auto'&&tg.colorScheme==='dark');
-  document.body.className=dark?'':'light';
-  profile.theme=t;
-  [$('thAuto'),$('thDark'),$('thLight')].forEach(el=>{if(el)el.classList.remove('selected');});
-  const map={auto:'thAuto',dark:'thDark',light:'thLight'};
-  if($(map[t]))$(map[t]).classList.add('selected');
+function saveProfile(){
+  const n=$('pName').value.trim(),p=$('pPhone').value.trim();
+  if(!n){toast('Введите имя','err');return;}
+  if(!validateName(n)){toast('Имя: только буквы, 2-50 символов','err');return;}
+  profile.name=n;profile.phone=p;profile.registered=true;
+  const uid=getUserId();
+  fetch(`${API}/save_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,name:n,phone:p})}).then(()=>{toast('Сохранено');refreshUI();}).catch(()=>toast('Ошибка','err'));
 }
-document.querySelectorAll('[data-theme]').forEach(el=>{
-  el.onclick=()=>{applyTheme(el.dataset.theme);save();};
-});
 
-/* ── AVATAR ── */
-function renderAva(){
-  [['profAvaT','profAvaI'],['avaBigT','avaBigI']].forEach(([t,i])=>{
-    const te=$(t),im=$(i);if(!te||!im)return;
-    const url=profile.avatarUrl;
-    const hasAva=url&&url!=='None'&&url!=='null'&&url!=='undefined'&&url.trim()&&url!=='null';
-    if(hasAva){
-      let src=url;
-      if(url.indexOf('/avatars/')===0)src=API+url;
-      te.style.display='none';im.style.display='block';im.src=src;
-      im.onerror=()=>{te.style.display='';im.style.display='none';te.textContent=profile.emoji||'👤';};
-    }else{
-      te.style.display='';im.style.display='none';te.textContent=profile.emoji||'👤';
-    }
+function loadMyOrders(){
+  const uid=getUserId();
+  fetch(`${API}/webapp_orders`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})})
+  .then(r=>r.json()).then(d=>{
+    const orders=d.orders||[];
+    $('statOrders').textContent=orders.length;
+    $('statActive').textContent=orders.filter(o=>!['завершён','отказ'].includes(o.status)).length;
+    renderOrders('ordersList',orders);
+    renderOrders('recentOrders',orders.slice(0,3));
+  }).catch(()=>{});
+}
+
+function renderOrders(cid,orders){
+  const el=$(cid);
+  if(!orders.length){el.innerHTML='<div class="empty" style="padding:30px"><div class="empty-text">Заказов пока нет</div></div>';return;}
+  el.innerHTML='';
+  orders.forEach((o,i)=>{
+    const div=document.createElement('div');div.className='order-card';div.style.animationDelay=(i*.05)+'s';div.onclick=()=>openOrderDetail(o);
+    div.innerHTML=`<div class="order-stripe" style="background:${stripeC(o.status)}"></div><div class="order-top"><div class="order-id">#${o.id}</div><div class="badge ${badgeC(o.status)}">${labelC(o.status)}</div></div><div class="order-grid"><div class="order-field">📦 <b>${o.model_name.length>22?o.model_name.substring(0,22)+'…':o.model_name}</b></div><div class="order-field">🔢 <b>${o.quantity} шт.</b></div>${o.total_price?`<div class="order-field">💰 <b>${o.total_price.toLocaleString()} р.</b></div>`:''}<div class="order-field">📅 <b>${fmtDate(o.created_at)}</b></div></div>`;
+    el.appendChild(div);
   });
 }
 
-/* ── PERSIST ── */
-function save(){localStorage.setItem('p3d',JSON.stringify(profile));}
-function load(){
-  const s=localStorage.getItem('p3d');
-  if(s)profile={...profile,...JSON.parse(s)};
-  applyTheme(profile.theme||'auto');
-  if(profile.registered){syncServer();refreshCard();go('sMain');}
-  else go('sReg');
-}
-async function syncServer(){
-  const uid=tg.initDataUnsafe?.user?.id;if(!uid)return;
-  try{
-    const r=await fetch(`${API}/get_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
-    const d=await r.json();
-    if(d.ok&&d.profile){
-      if(d.profile.name)profile.name=d.profile.name;
-      if(d.profile.phone)profile.phone=d.profile.phone;
-      if(d.profile.avatar_url){
-        const av=d.profile.avatar_url;
-        if(av&&av!=='None'&&av!=='null'&&av.trim())profile.avatarUrl=av;
-      }
-      save();refreshCard();
-    }
-  }catch(e){}
-}
-function refreshCard(){
-  $('profName').textContent=profile.name||'Гость';
-  $('profPhone').textContent=profile.phone||'не указан';
-  if($('sName'))$('sName').value=profile.name||'';
-  if($('sPhone'))$('sPhone').value=profile.phone||'';
-  renderAva();
-}
-
-/* ── SCREENS ── */
-function go(id){
-  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
-  $(id).classList.add('active');
-  window.scrollTo({top:0,behavior:'smooth'});
-}
-
-/* ── MENU ── */
-document.querySelectorAll('[data-go]').forEach(el=>{
-  el.onclick=()=>{
-    if(!profile.registered){go('sReg');return;}
-    const t=el.dataset.go;
-    if(t==='order'){qty=1;$('qVal').textContent='1';go('sOrder');}
-    if(t==='history'){go('sHist');loadOrders();}
-    if(t==='settings'){openSettings();go('sSet');}
-  };
-});
-$('profCard').onclick=()=>{if(profile.registered){openSettings();go('sSet');}};
-
-/* ── REGISTER ── */
-$('rBtn').onclick=()=>{
-  const n=$('rName').value.trim();let p=$('rPhone').value.trim();
-  const note=$('rNote');
-  const digits=p.replace(/[^0-9]/g,'');
-  let phone9=digits;
-  if(digits.startsWith('375'))phone9=digits.substring(3);
-  else if(digits.startsWith('7'))phone9=digits.substring(1);
-  else if(digits.startsWith('8'))phone9=digits.substring(1);
-  if(phone9.length!==9){note.textContent='❌ Нужно ровно 9 цифр (номер Беларуси)';note.className='notice err';setTimeout(()=>note.className='notice',3e3);return;}
-  p=`+375 ${phone9.substring(0,2)} ${phone9.substring(2,5)}-${phone9.substring(5,7)}-${phone9.substring(7,9)}`;
-  if(!n){note.textContent='❌ Введите имя';note.className='notice err';setTimeout(()=>note.className='notice',3e3);return;}
-  profile={...profile,name:n,phone:p,registered:true};save();refreshCard();go('sMain');
-  const uid=tg.initDataUnsafe?.user?.id;
-  fetch(`${API}/save_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,name:n,phone:p})}).catch(()=>{});
-};
-setupPhone($('rPhone'));
-
-/* ── BACK ── */
-$('bkOrder').onclick=()=>go('sMain');
-$('bkHist').onclick=()=>go('sMain');
-$('bkSet').onclick=()=>go('sMain');
-$('bkDet').onclick=()=>{go('sHist');loadOrders();};
-
-/* ── QUANTITY ── */
-$('qMinus').onclick=()=>{if(qty>1){qty--;$('qVal').textContent=qty;}};
-$('qPlus').onclick=()=>{qty++;$('qVal').textContent=qty;};
-
-/* ── FILE ── */
-const dropZone=$('dropZone'),fInput=$('fInput');
-dropZone.onclick=()=>fInput.click();
-dropZone.ondragover=e=>{e.preventDefault();dropZone.style.borderColor='var(--lime)';};
-dropZone.ondragleave=()=>dropZone.style.borderColor='';
-dropZone.ondrop=e=>{e.preventDefault();dropZone.style.borderColor='';if(e.dataTransfer.files[0])setFile(e.dataTransfer.files[0]);};
-fInput.onchange=e=>{if(e.target.files[0])setFile(e.target.files[0]);};
-function setFile(f){selFile=f;$('fName').textContent=f.name;$('fChip').classList.remove('hidden');dropZone.style.display='none';}
-$('fRm').onclick=()=>{selFile=null;fInput.value='';$('fChip').classList.add('hidden');dropZone.style.display='';};
-
-/* ── SEND ORDER ── */
-$('oSend').onclick=async()=>{
-  const desc=$('oDesc').value.trim(),note=$('oNote'),btn=$('oSend');
-  if(!desc){note.textContent='❌ Опиши что нужно напечатать';note.className='notice err';setTimeout(()=>note.className='notice',3e3);return;}
-  btn.disabled=true;btn.textContent='⏳ Отправка...';
-  const uid=tg.initDataUnsafe?.user?.id,un=tg.initDataUnsafe?.user?.username||'';
-  const fd=new FormData();
-  fd.append('user_id',uid||0);fd.append('username',un);
-  fd.append('name',profile.name);fd.append('phone',profile.phone);
-  fd.append('model',desc);fd.append('quantity',qty);
-  if(selFile)fd.append('file',selFile);
-  try{
-    const r=await fetch(`${API}/webapp_order_file`,{method:'POST',body:fd});
-    const d=await r.json().catch(()=>({ok:true}));
-    note.textContent=`✅ Заказ №${d.order_id||''} отправлен!`;note.className='notice ok';
-    $('oDesc').value='';qty=1;$('qVal').textContent='1';
-    selFile=null;fInput.value='';$('fChip').classList.add('hidden');dropZone.style.display='';
-    setTimeout(()=>{go('sMain');note.className='notice';},2e3);
-  }catch(e){
-    note.textContent='⚠️ Отправлено. Проверь историю.';note.className='notice ok';
-    setTimeout(()=>{go('sMain');note.className='notice';},2e3);
-  }finally{btn.disabled=false;btn.textContent='Отправить заказ ✓';}
-};
-
-/* ── BADGES ── */
-function getPill(s){
-  return {
-    'новый':'pill-new','принят':'pill-ok','отказ':'pill-bad',
-    'подготовка модели':'pill-prep','цена выставлена':'pill-price',
-    'оплачено наличными':'pill-paid','печать':'pill-print','готова':'pill-ready'
-  }[s]||'pill-new';
-}
-function getLabel(s){
-  return {
-    'новый':'Ожидает','принят':'Принят','отказ':'Отказ',
-    'подготовка модели':'Подготовка','цена выставлена':'Цена','оплачено наличными':'Оплачено',
-    'печать':'Печать','готова':'Готов'
-  }[s]||s;
-}
-function getStripe(s){
-  return {
-    'новый':'var(--orange)','принят':'var(--accent)','отказ':'var(--red)',
-    'подготовка модели':'var(--accent2)','цена выставлена':'var(--teal)',
-    'оплачено наличными':'var(--accent)','печать':'var(--accent2)','готова':'var(--teal)'
-  }[s]||'var(--muted)';
-}
-
-/* ── LOAD ORDERS ── */
-async function loadOrders(){
-  const list=$('ordList');
-  list.innerHTML='<div class="loading">// загрузка...</div>';
-  const uid=tg.initDataUnsafe?.user?.id;
-  try{
-    const r=await fetch(`${API}/webapp_orders`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid})});
-    const d=await r.json();
-    if(d.orders&&d.orders.length){
-      list.innerHTML='';
-      d.orders.forEach((o,i)=>{
-        const div=document.createElement('div');
-        div.className='ord-card up';div.style.animationDelay=(i*.05)+'s';
-        div.onclick=()=>showDetail(o);
-        const total=o.total_price||0;
-        div.innerHTML=`
-          <div class="ord-stripe" style="background:${getStripe(o.status)}"></div>
-          <div class="ord-head">
-            <span class="ord-id">Заказ #${o.id}</span>
-            <span class="pill ${getPill(o.status)}">${getLabel(o.status)}</span>
-          </div>
-          <div class="ord-info">
-            <div class="ord-row">📦 <strong>${o.model_name.length>26?o.model_name.substring(0,26)+'…':o.model_name}</strong></div>
-            <div class="ord-row">🔢 <strong>${o.quantity} шт.</strong></div>
-            ${total>0?`<div class="ord-row">💰 <strong>${total.toLocaleString()} руб.</strong></div>`:''}
-            <div class="ord-row">📅 <strong>${dt(o.created_at)}</strong></div>
-          </div>`;
-        list.appendChild(div);
-      });
-    }else{
-      list.innerHTML='<div class="empty"><div class="empty-ico">📭</div><div class="empty-txt">Заказов пока нет.<br>Оформи первый!</div></div>';
-    }
-  }catch(e){list.innerHTML='<div class="loading">// ошибка загрузки</div>';}
-}
-function showDetail(o){
-  const total=o.total_price||0;
+function openOrderDetail(o){
   $('detNum').textContent='#'+o.id;
-  $('detBody').innerHTML=`
-    <div class="det-card up">
-      <div class="det-row"><span class="det-lbl">СТАТУС</span><span class="det-val"><span class="pill ${getPill(o.status)}">${getLabel(o.status)}</span></span></div>
-      <div class="det-row"><span class="det-lbl">МОДЕЛЬ</span><span class="det-val">${o.model_name}</span></div>
-      <div class="det-row"><span class="det-lbl">КОЛ-ВО</span><span class="det-val">${o.quantity} шт.</span></div>
-      ${total>0?`<div class="det-row"><span class="det-lbl">СУММА</span><span class="det-val" style="color:var(--accent)">${total.toLocaleString()} руб.</span></div>`:''}
-      <div class="det-row"><span class="det-lbl">ДАТА</span><span class="det-val">${dt(o.created_at)}</span></div>
-    </div>`;
-  go('sDet');
+  $('detBody').innerHTML=`<div class="card"><div style="text-align:center;margin-bottom:16px;"><div class="badge ${badgeC(o.status)}" style="font-size:14px;padding:8px 20px;">${labelC(o.status)}</div></div><div class="order-grid" style="gap:12px;"><div class="order-field">📦 <b>${o.model_name}</b></div><div class="order-field">🔢 <b>${o.quantity} шт.</b></div>${o.total_price?`<div class="order-field">💰 <b>${o.total_price.toLocaleString()} руб.</b></div>`:''}<div class="order-field">📅 <b>${fmtDate(o.created_at)}</b></div></div></div>`;
+  goPage('pageOrderDetail');
 }
 
-/* ── SETTINGS ── */
-function openSettings(){
-  $('sName').value=profile.name||'';
-  $('sPhone').value=profile.phone||'';
-  setupPhone($('sPhone'));
-  applyTheme(profile.theme||'auto');
-  renderAva();
+function changeQty(d){qty=Math.max(1,qty+d);$('qtyVal').textContent=qty;}
+
+function sendOrder(){
+  const desc=$('oDesc').value.trim();
+  if(!desc){toast('Опиши что нужно напечатать','err');return;}
+  if(!profile.registered){showRegModal();return;}
+  const fd=new FormData();fd.append('user_id',getUserId());fd.append('username','');fd.append('name',profile.name);fd.append('phone',profile.phone);fd.append('model',desc);fd.append('quantity',qty);fd.append('source','Мобильное приложение');
+  fetch(`${API}/webapp_order_file`,{method:'POST',body:fd}).then(r=>r.json()).then(d=>{
+    toast('✅ Заказ #'+d.order_id+' отправлен!');$('oDesc').value='';qty=1;$('qtyVal').textContent='1';
+    setTimeout(()=>{loadMyOrders();goPage('pageOrders');},1000);
+  }).catch(()=>toast('Ошибка','err'));
 }
-$('sSave').onclick=()=>{
-  const n=$('sName').value.trim(),p=$('sPhone').value.trim();
-  const note=$('sNote');
-  if(!n||p.length<8){note.textContent='❌ Заполни поля';note.className='notice err';setTimeout(()=>note.className='notice',3e3);return;}
-  profile.name=n;profile.phone=p;save();refreshCard();
-  const uid=tg.initDataUnsafe?.user?.id;
-  fetch(`${API}/save_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,name:n,phone:p})}).catch(()=>{});
-  note.textContent='✅ Сохранено!';note.className='notice ok';
-  setTimeout(()=>{note.className='notice';go('sMain');},1500);
-};
 
-/* ── AVATAR ── */
-$('avaBig').onclick=()=>$('avaPhoto').click();
-$('avaPhoto').onclick=()=>{
-  const inp=document.createElement('input');
-  inp.type='file';inp.accept='image/*';inp.style.display='none';
-  document.body.appendChild(inp);
-  inp.onchange=e=>{
-    if(e.target.files&&e.target.files[0])openCrop(e.target.files[0]);
-    document.body.removeChild(inp);
-  };
-  inp.click();
-};
-$('avaEmoji').onclick=()=>{$('mEmoji').classList.remove('hidden');$('emojiInp').value='';};
-$('avaRm').onclick=()=>{
-  profile.emoji='👤';profile.avatarUrl=null;renderAva();save();
-  const uid=tg.initDataUnsafe?.user?.id;
-  fetch(`${API}/save_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,name:profile.name,phone:profile.phone,avatar_url:null})}).catch(()=>{});
-};
+/* ADMIN */
+let adminUnlocked=localStorage.getItem('3dprinti_admin')==='1';
+let devTapCount=0;
+let devActive=localStorage.getItem('3dprinti_dev')==='1';
+let adminReqId=null;
+let adminCheckInterval=null;
 
-$('emojiCancel').onclick=()=>$('mEmoji').classList.add('hidden');
-$('emojiOk').onclick=()=>{
-  const e=$('emojiInp').value.trim();
-  if(e){profile.emoji=e;profile.avatarUrl=null;renderAva();save();
-    const uid=tg.initDataUnsafe?.user?.id;
-    fetch(`${API}/save_profile`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,name:profile.name,phone:profile.phone,avatar_url:null})}).catch(()=>{});
+function devTap(){
+  devTapCount++;
+  if(devTapCount>=7){
+    devActive=true;localStorage.setItem('3dprinti_dev','1');
+    $('devModeSection').style.display='block';
+    $('devHidden').style.display='none';
+    toast('Режим разработчика активирован!');
+  }else{
+    $('devTapText').textContent=`Ещё ${7-devTapCount} нажатий...`;
   }
-  $('mEmoji').classList.add('hidden');
-};
-$('mEmoji').onclick=ev=>{if(ev.target===$('mEmoji'))$('mEmoji').classList.add('hidden');};
-
-function openCrop(file){
-  const reader=new FileReader();
-  reader.onload=ev=>{
-    const img=$('cropImg');img.src=ev.target.result;
-    $('mCrop').classList.remove('hidden');
-    if(cropper){try{cropper.destroy();}catch(e){}}
-    cropper=null;
-    setTimeout(()=>{
-      try{
-        cropper=new Cropper(img,{aspectRatio:1,viewMode:1,dragMode:'move',autoCropArea:1,guides:false,background:false});
-      }catch(e){
-        console.error('Cropper error:',e);
-        $('mCrop').classList.add('hidden');
-      }
-    },200);
-  };
-  reader.onerror=()=>{alert('Ошибка чтения файла');};
-  reader.readAsDataURL(file);
 }
-$('cropCancel').onclick=()=>{
-  $('mCrop').classList.add('hidden');
-  if(cropper){try{cropper.destroy();}catch(e){}}
-  cropper=null;
-};
-$('cropOk').onclick=async()=>{
-  if(!cropper)return;
-  try{
-    const canvas=cropper.getCroppedCanvas({width:200,height:200});
-    if(!canvas){alert('Ошибка обрезки');return;}
-    const imgData=canvas.toDataURL('image/jpeg',0.7);
-    const uid=tg.initDataUnsafe?.user?.id;
-    const r=await fetch(`${API}/upload_avatar`,{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({user_id:uid,image_data:imgData})
-    });
-    const d=await r.json();
-    if(d.ok&&d.avatar_url){
-      profile.avatarUrl=d.avatar_url;
-      profile.emoji=null;
-      save();renderAva();
+
+function unlockAdmin(){
+  const pass=$('adminPassInput').value.trim();
+  if(pass!=='458307pP'){toast('Неверный пароль','err');return;}
+  toast('Отправляем запрос в Telegram...');
+  const uid=getUserId();
+  fetch(`${API}/request_admin`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({user_id:uid,name:profile.name||'Пользователь',password:pass})})
+  .then(r=>r.json()).then(d=>{
+    if(d.ok&&d.req_id){
+      adminReqId=d.req_id;
+      $('adminPassInput').value='';
+      $('adminPassInput').placeholder='Ожидание подтверждения...';
+      $('adminPassInput').disabled=true;
+      startAdminCheck();
+      toast('Запрос отправлен! Ожидай подтверждения');
     }else{
-      profile.avatarUrl=imgData;save();renderAva();
+      toast(d.error||'Ошибка отправки','err');
     }
-  }catch(e){
-    console.error('Upload error:',e);
-    try{
-      const canvas=cropper.getCroppedCanvas({width:200,height:200});
-      const imgData=canvas.toDataURL('image/jpeg',0.7);
-      profile.avatarUrl=imgData;save();renderAva();
-    }catch(e2){}
-  }
-  $('mCrop').classList.add('hidden');
-  if(cropper){try{cropper.destroy();}catch(e){}}
-  cropper=null;
-};
+  }).catch(e=>{
+    console.error('Request error:',e);
+    toast('Нет связи с сервером','err');
+  });
+}
 
-/* ── INIT ── */
-load();
-tg.MainButton.setText('Закрыть');
-tg.MainButton.onClick(()=>tg.close());
+function startAdminCheck(){
+  if(adminCheckInterval)clearInterval(adminCheckInterval);
+  adminCheckInterval=setInterval(()=>{
+    if(!adminReqId)return;
+    fetch(`${API}/check_admin_status`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({req_id:adminReqId})})
+    .then(r=>r.json()).then(d=>{
+      if(d.status==='confirmed'){
+        clearInterval(adminCheckInterval);
+        adminUnlocked=true;localStorage.setItem('3dprinti_admin','1');
+        $('navAdmin').style.display='';
+        toast('✅ Админ-панель активирована!');
+        $('adminPassInput').placeholder='Уже активировано ✓';
+      }else if(d.status==='denied'){
+        clearInterval(adminCheckInterval);
+        $('adminPassInput').value='';
+        $('adminPassInput').placeholder='Введите пароль';
+        $('adminPassInput').disabled=false;
+        toast('❌ Запрос отклонён','err');
+      }
+    }).catch(()=>{});
+  },3000);
+}
+
+function tryAdmin(){
+  if(!adminUnlocked){toast('Нет доступа','err');goPage('pageSettings');return;}
+  goPage('pageAdmin');admLoad('new');
+}
+
+function initDevMode(){
+  if(devActive){
+    $('devModeSection').style.display='block';
+    $('devHidden').style.display='none';
+  }
+  if(adminUnlocked){$('navAdmin').style.display='';$('adminPassInput').placeholder='Уже активировано ✓';$('adminPassInput').disabled=true;}
+}
+
+function validateName(name){
+  if(!name)return false;
+  if(name.length<2||name.length>50)return false;
+  const regex=/^[a-zA-Zа-яА-ЯёЁ\s\-]+$/;
+  return regex.test(name);
+}
+
+function refreshUI(){
+  $('userName').textContent=profile.name||'Гость';
+  $('pName').value=profile.name||'';
+  $('pPhone').value=profile.phone||'';
+  $('settingsName').textContent=profile.name||'Гость';
+  $('settingsPhone').textContent=profile.phone||'не указан';
+  renderAvatar('homeAvatar');
+  renderAvatar('profileAvatar');
+  renderAvatar('settingsAvatar');
+}
+
+function setTheme(t){
+  localStorage.setItem('3dprinti_theme',t);
+  document.documentElement.classList.remove('theme-dark','theme-purple','theme-blue');
+  if(t!=='dark')document.documentElement.classList.add('theme-'+t);
+  document.querySelectorAll('[id^="th"]').forEach(el=>el.style.borderColor='var(--edge)');
+  const map={dark:'thDark',purple:'thPurple',blue:'thBlue'};
+  if(map[t])$(map[t]).style.borderColor='var(--accent)';
+}
+
+function initTheme(){
+  const t=localStorage.getItem('3dprinti_theme')||'dark';
+  setTheme(t);
+  if(notifEnabled){$('notifToggle').style.background='var(--accent)';$('notifDot').style.right='2px';$('notifDot').style.left='auto';}
+}
+
+function clearCache(){
+  localStorage.removeItem('3dprinti_orders');
+  toast('Кэш очищен');
+}
+
+function initTheme(){
+  const t=localStorage.getItem('3dprinti_theme')||'dark';
+  setTheme(t);
+}
+let currentAdmTab='new';
+function admTab(el,tab){document.querySelectorAll('.adm-tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');currentAdmTab=tab;admLoad(tab);}
+function admTabUsers(el){document.querySelectorAll('.adm-tab').forEach(t=>t.classList.remove('on'));el.classList.add('on');loadAdminUsers();}
+function admLoad(tab){$('admOrdersList').innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Загрузка...</div>';fetch(`${API}/admin_orders?status=${tab}`).then(r=>r.json()).then(d=>renderAdminOrders(d.orders||[])).catch(()=>{});}
+
+function renderAdminOrders(orders){
+  const el=$('admOrdersList');
+  if(!orders.length){el.innerHTML='<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">Пусто</div></div>';return;}
+  el.innerHTML='';
+  orders.forEach(o=>{
+    const div=document.createElement('div');div.className='order-card';div.onclick=()=>openAdmDetail(o);
+    div.innerHTML=`<div class="order-stripe" style="background:${stripeC(o.status)}"></div><div class="order-top"><div class="order-id">#${o.id} · ${o.client_name}</div><div class="badge ${badgeC(o.status)}">${labelC(o.status)}</div></div><div class="order-grid"><div class="order-field">📱 <b>${o.phone||'—'}</b></div><div class="order-field">📦 <b>${o.model_name.length>20?o.model_name.substring(0,20)+'…':o.model_name}</b></div><div class="order-field">🔢 <b>${o.quantity} шт.</b></div><div class="order-field">📅 <b>${fmtDate(o.created_at)}</b></div></div>`;
+    el.appendChild(div);
+  });
+}
+
+let admCurOrder=null;
+function openAdmDetail(o){
+  admCurOrder=o;
+  $('admDetNum').textContent='#'+o.id;
+  $('admDetBody').innerHTML=`<div class="card"><div style="text-align:center;margin-bottom:12px;"><div class="badge ${badgeC(o.status)}" style="font-size:14px;padding:8px 20px;">${labelC(o.status)}</div></div><div class="order-grid" style="gap:10px;"><div class="order-field">👤 <b>${o.client_name}</b></div><div class="order-field">📱 <b>${o.phone||'—'}</b></div><div class="order-field">📦 <b>${o.model_name}</b></div><div class="order-field">🔢 <b>${o.quantity} шт.</b></div>${o.total_price?`<div class="order-field">💰 <b>${o.total_price.toLocaleString()} руб.</b></div>`:''}<div class="order-field">📅 <b>${fmtDate(o.created_at)}</b></div></div></div>`;
+  $('admPriceInp').value=o.price_per_unit>0?o.price_per_unit:'';
+  $('admStatusSel').value=o.status;
+  $('admDetNote').className='toast';
+  goPage('pageAdmDetail');
+}
+
+function admNote(msg,type){
+  const n=$('admDetNote');
+  n.textContent=msg;n.className='toast toast-'+type+' show';
+  setTimeout(()=>n.className='toast',3000);
+}
+
+function admAction(action){
+  if(!admCurOrder)return;
+  const statusMap={accept:'принят',reject:'отказ',prep:'подготовка модели',print:'печать',ready:'готова',paid:'оплачено наличными',done:'завершён'};
+  const s=statusMap[action];
+  if(action==='done'&&!confirm('Завершить заказ?'))return;
+  fetch(`${API}/admin_status`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:admCurOrder.id,status:s})})
+  .then(r=>r.json()).then(d=>{
+    if(d.ok){
+      admCurOrder.status=s;
+      admNote('✅ Статус изменён','ok');
+      $('admDetBody').querySelector('.badge').className='badge '+badgeC(s);
+      $('admDetBody').querySelector('.badge').textContent=labelC(s);
+      $('admStatusSel').value=s;
+    }else{admNote('❌ Ошибка','err');}
+  }).catch(()=>admNote('❌ Нет связи','err'));
+}
+
+function admSetPrice(){
+  if(!admCurOrder)return;
+  const price=parseFloat($('admPriceInp').value);
+  if(!price||price<=0){admNote('Введите цену','err');return;}
+  fetch(`${API}/admin_price`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:admCurOrder.id,price})})
+  .then(r=>r.json()).then(d=>{
+    if(d.ok){admCurOrder.price_per_unit=price;admCurOrder.total_price=price*admCurOrder.quantity;admNote('✅ Цена '+price+' руб.','ok');}
+    else{admNote('❌ Ошибка','err');}
+  }).catch(()=>admNote('❌ Нет связи','err'));
+}
+
+function admSetStatus(){
+  if(!admCurOrder)return;
+  const s=$('admStatusSel').value;
+  fetch(`${API}/admin_status`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({order_id:admCurOrder.id,status:s})})
+  .then(r=>r.json()).then(d=>{
+    if(d.ok){admCurOrder.status=s;admNote('✅ Статус: '+labelC(s),'ok');}
+    else{admNote('❌ Ошибка','err');}
+  }).catch(()=>admNote('❌ Нет связи','err'));
+}
+
+function loadAdminUsers(){
+  $('admOrdersList').innerHTML='<div style="text-align:center;padding:30px;color:var(--txt2)">Загрузка...</div>';
+  fetch(`${API}/admin_users`).then(r=>r.json()).then(d=>{
+    const users=d.users||[];const el=$('admOrdersList');
+    if(!users.length){el.innerHTML='<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">Пусто</div></div>';return;}
+    el.innerHTML='';
+    users.forEach(u=>{
+      const has=u.avatar_url&&u.avatar_url!=='None'&&u.avatar_url.trim();
+      const div=document.createElement('div');div.className='user-card';
+      div.innerHTML=`<div class="user-avatar">${has?'<img src="'+u.avatar_url+'">':'👤'}</div><div class="user-info"><div class="user-name">${u.name||'Без имени'}</div><div class="user-phone">${u.phone||'—'}</div></div><div class="user-arrow">›</div>`;
+      el.appendChild(div);
+    });
+  }).catch(()=>{});
+}
+
+function fmtDate(s){if(!s)return'—';const m=s.match(/^(\d{4})-(\d{2})-(\d{2})[\sT](\d{2}):(\d{2})/);return m?`${m[3]}.${m[2]}.${m[1]} ${m[4]}:${m[5]}`:s;}
+function badgeC(s){return{'новый':'b-new','принят':'b-active','подготовка модели':'b-active','цена выставлена':'b-active','печать':'b-active','оплачено наличными':'b-active','готова':'b-done','завершён':'b-done','отказ':'b-cancel'}[s]||'b-new';}
+function labelC(s){return{'новый':'Новый','принят':'Принят','подготовка модели':'Подготовка','цена выставлена':'Цена','печать':'Печать','оплачено наличными':'Оплачено','готова':'Готов','завершён':'Завершён','отказ':'Отказ'}[s]||s;}
+function stripeC(s){return{'новый':'var(--orange)','принят':'var(--accent)','подготовка модели':'var(--blue)','цена выставлена':'var(--green)','печать':'var(--blue)','оплачено наличными':'var(--green)','готова':'var(--green)','завершён':'var(--green)','отказ':'var(--red)'}[s]||'var(--txt2)';}
+
+loadProfile();setTimeout(()=>{loadMyOrders();requestNotifPermission();updateNotifUI();},500);initTheme();setInterval(checkNotifications,60000);
 </script>
 </body>
 </html>

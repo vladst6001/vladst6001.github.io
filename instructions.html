@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07080d">
+<title>Инструкция — 3Dprinti</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:#07080d;color:#eaecf5;font-family:'Inter',system-ui,sans-serif;padding:20px;padding-top:env(safe-area-inset-top,20px);line-height:1.6;}
+body::before{content:'';position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top,20px);background:#07080d;z-index:9998;}
+h1{font-size:24px;font-weight:800;margin-bottom:20px;}
+h1 span{background:linear-gradient(135deg,#6c5ce7,#a29bfe);-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+h2{font-size:16px;font-weight:700;color:#a29bfe;margin:20px 0 10px;text-transform:uppercase;letter-spacing:1px;font-size:12px;}
+.card{background:#12131f;border:1px solid rgba(120,130,255,.08);border-radius:16px;padding:16px;margin-bottom:12px;}
+.step{display:flex;gap:14px;align-items:flex-start;margin-bottom:12px;}
+.step-num{width:28px;height:28px;background:linear-gradient(135deg,#6c5ce7,#a29bfe);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;}
+.step-text{flex:1;font-size:14px;}
+.step-text b{color:#a29bfe;}
+.back{display:inline-flex;align-items:center;gap:8px;color:#a29bfe;font-size:14px;font-weight:600;text-decoration:none;margin-bottom:20px;padding:8px 0;}
+ul{padding-left:20px;margin:8px 0;}
+li{margin-bottom:6px;font-size:14px;color:#8b8fad;}
+li b{color:#eaecf5;}
+code{background:#181a2a;padding:2px 8px;border-radius:6px;font-size:13px;color:#a29bfe;}
+.version{font-size:11px;color:#5a5e80;text-align:center;margin-top:30px;padding:20px 0;border-top:1px solid rgba(120,130,255,.08);}
+</style>
+</head>
+<body>
+
+<a class="back" href="index.html">← Назад в приложение</a>
+
+<h1>Инструкция <span>3Dprinti</span></h1>
+
+<h2>Знакомство</h2>
+<div class="card">
+  <p>3Dprinti — сервис 3D печати на заказ. Здесь ты можешь:</p>
+  <ul>
+    <li><b>Оформить заказ</b> на 3D печать</li>
+    <li><b>Отслеживать статус</b> заказа</li>
+    <li><b>Получать уведомления</b> об изменениях</li>
+  </ul>
+</div>
+
+<h2>Регистрация</h2>
+<div class="card">
+  <div class="step"><div class="step-num">1</div><div class="step-text">Открой приложение</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-text">Введи <b>имя</b> (только буквы, 2-50 символов)</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-text">Введи <b>номер телефона</b> (формат +375 XX XXX-XX-XX)</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-text">Нажми <b>«Начать»</b></div></div>
+</div>
+
+<h2>Создание заказа</h2>
+<div class="card">
+  <div class="step"><div class="step-num">1</div><div class="step-text">Нажми <b>«Новый заказ»</b> на главной</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-text">Опиши модель (название, размеры, материал)</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-text">Укажи <b>количество</b></div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-text">Нажми <b>«Отправить заказ»</b></div></div>
+</div>
+
+<h2>Уведомления</h2>
+<div class="card">
+  <div class="step"><div class="step-num">1</div><div class="step-text">Зайди в <b>Настройки</b></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-text">Включи <b>«Push-уведомления»</b></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-text">Разреши уведомления в системном диалоге</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-text">Если диалог не появился — зайди в Настройки телефона → Приложения → 3Dprinti → Уведомления</div></div>
+</div>
+
+<h2>Админ-панель</h2>
+<div class="card">
+  <div class="step"><div class="step-num">1</div><div class="step-text">Зайди в <b>Настройки → О приложении</b></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-text">Нажми <b>7 раз</b> на «Версия 2.0»</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-text">Введи пароль: <code>458307pP</code></div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-text">Дождись подтверждения в <b>Telegram</b></div></div>
+</div>
+
+<h2>Настройки приложения</h2>
+<div class="card">
+  <ul>
+    <li><b>Профиль</b> — изменить имя, телефон, аватар</li>
+    <li><b>Внешний вид</b> — сменить тему (тёмная/фиолетовая/синяя)</li>
+    <li><b>Уведомления</b> — включить/выключить push</li>
+  </ul>
+</div>
+
+<h2>Telegram бот</h2>
+<div class="card">
+  <p>Бот доступен в Telegram:</p>
+  <ul>
+    <li><b>/start</b> — главное меню</li>
+    <li><b>/new_order</b> — создать заказ</li>
+    <li><b>/my_orders</b> — мои заказы</li>
+    <li><b>/help</b> — справка</li>
+  </ul>
+  <p style="margin-top:10px;font-size:13px;color:#8b8fad;">Заказы из приложения и бота синхронизируются.</p>
+</div>
+
+<div class="version">3Dprinti v2.0 · Разработчик: Vlad Stolbov</div>
+</body>
+</html>
